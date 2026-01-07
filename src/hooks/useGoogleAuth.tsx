@@ -31,11 +31,23 @@ export const useGoogleAuth = () => {
 
     try {
       const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-      const redirectUri = process.env.NEXT_PUBLIC_REDIRECT_URI;
+      let redirectUri = process.env.NEXT_PUBLIC_REDIRECT_URI;
+      
+      // Auto-detect environment and set appropriate redirect URI
+      if (typeof window !== 'undefined') {
+        const currentOrigin = window.location.origin;
+        if (currentOrigin.includes('localhost') || currentOrigin.includes('127.0.0.1')) {
+          redirectUri = `${currentOrigin}/auth/callback`;
+        } else if (currentOrigin.includes('lyfeumbria.web.app')) {
+          redirectUri = `${currentOrigin}/auth/callback`;
+        }
+      }
       
       if (!clientId || !redirectUri) {
         throw new Error('Configurazione Google OAuth incompleta');
       }
+
+      console.log('OAuth Config:', { clientId, redirectUri }); // Debug log
 
       // Costruisce l'URL di autenticazione Google OAuth2
       const params = new URLSearchParams({
@@ -48,6 +60,7 @@ export const useGoogleAuth = () => {
       });
 
       const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
+      console.log('Auth URL:', authUrl); // Debug log
       
       // Apre finestra popup per l'autenticazione
       const popup = window.open(
@@ -60,28 +73,50 @@ export const useGoogleAuth = () => {
         throw new Error('Impossibile aprire la finestra di autenticazione. Controlla il blocco popup.');
       }
 
+      let timeoutId: NodeJS.Timeout;
+      
       // Monitora la finestra popup per il callback
       const checkClosed = setInterval(() => {
         if (popup.closed) {
           clearInterval(checkClosed);
+          clearTimeout(timeoutId);
           setIsLoading(false);
-          setError('Autenticazione annullata dall\'utente');
+          if (!popup.closed) {
+            setError('Autenticazione annullata dall\'utente');
+          }
         }
       }, 1000);
 
+      // Timeout dopo 5 minuti
+      timeoutId = setTimeout(() => {
+        clearInterval(checkClosed);
+        if (!popup.closed) {
+          popup.close();
+        }
+        setIsLoading(false);
+        setError('Timeout durante l\'autenticazione. Riprova.');
+        window.removeEventListener('message', messageListener);
+      }, 5 * 60 * 1000);
+
       // Gestisce il messaggio dal popup
       const messageListener = (event: MessageEvent) => {
-        if (event.origin !== window.location.origin) return;
+        // Verifica l'origine per sicurezza
+        if (event.origin !== window.location.origin) {
+          console.warn('Messaggio da origine non autorizzata:', event.origin);
+          return;
+        }
 
         if (event.data.type === 'GOOGLE_AUTH_SUCCESS') {
           clearInterval(checkClosed);
+          clearTimeout(timeoutId);
           popup.close();
           handleAuthSuccess(event.data.code);
           window.removeEventListener('message', messageListener);
         } else if (event.data.type === 'GOOGLE_AUTH_ERROR') {
           clearInterval(checkClosed);
+          clearTimeout(timeoutId);
           popup.close();
-          setError(event.data.error);
+          setError(`Errore OAuth: ${event.data.error}`);
           setIsLoading(false);
           window.removeEventListener('message', messageListener);
         }
@@ -98,6 +133,13 @@ export const useGoogleAuth = () => {
   // Gestisce il successo dell'autenticazione
   const handleAuthSuccess = async (code: string) => {
     try {
+      // Determina il redirect URI dinamicamente
+      let redirectUri = process.env.NEXT_PUBLIC_REDIRECT_URI;
+      if (typeof window !== 'undefined') {
+        const currentOrigin = window.location.origin;
+        redirectUri = `${currentOrigin}/auth/callback`;
+      }
+
       // Scambia il codice direttamente con Google OAuth2
       const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
         method: 'POST',
@@ -109,7 +151,7 @@ export const useGoogleAuth = () => {
           client_secret: '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',
           code,
           grant_type: 'authorization_code',
-          redirect_uri: process.env.NEXT_PUBLIC_REDIRECT_URI!,
+          redirect_uri: redirectUri!,
         }),
       });
 

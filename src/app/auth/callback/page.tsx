@@ -9,23 +9,31 @@ function CallbackContent() {
   useEffect(() => {
     const code = searchParams.get('code');
     const error = searchParams.get('error');
+    
+    console.log('Auth callback received:', { code: !!code, error }); // Debug log
 
     if (error) {
+      console.error('OAuth error:', error); // Debug log
       // Invia errore al parent window
       window.opener?.postMessage({
         type: 'GOOGLE_AUTH_ERROR',
         error: error
       }, window.location.origin);
     } else if (code) {
+      console.log('OAuth success, sending code to parent'); // Debug log
       // Invia codice di successo al parent window
       window.opener?.postMessage({
         type: 'GOOGLE_AUTH_SUCCESS',
         code: code
       }, window.location.origin);
+    } else {
+      console.warn('No code or error received in callback'); // Debug log
     }
 
     // Chiudi la finestra popup
-    window.close();
+    setTimeout(() => {
+      window.close();
+    }, 2000); // Aspetta 2 secondi per permettere il debug
   }, [searchParams]);
 
   return (
