@@ -23,15 +23,15 @@ export class GoogleDriveService {
     this.accessToken = accessToken;
   }
 
-  // Lista tutti i file nella cartella principale
-  async listFiles(pageSize: number = 10, pageToken?: string): Promise<{ files: DriveFile[], nextPageToken?: string }> {
+  // Lista tutti i file nella cartella specificata
+  async listFilesInFolder(folderId: string, pageSize: number = 10, pageToken?: string): Promise<{ files: DriveFile[], nextPageToken?: string }> {
     if (!this.accessToken) {
       throw new Error('Access token non disponibile');
     }
 
     try {
       const params = new URLSearchParams({
-        q: `'${this.folderId}' in parents and trashed=false`,
+        q: `'${folderId}' in parents and trashed=false`,
         pageSize: pageSize.toString(),
         fields: 'nextPageToken, files(id, name, mimeType, size, createdTime, modifiedTime, webViewLink, webContentLink, parents)',
         orderBy: 'modifiedTime desc'
@@ -63,15 +63,20 @@ export class GoogleDriveService {
     }
   }
 
-  // Cerca file per nome
-  async searchFiles(query: string): Promise<DriveFile[]> {
+  // Lista tutti i file nella cartella principale (mantenuto per compatibilità)
+  async listFiles(pageSize: number = 10, pageToken?: string): Promise<{ files: DriveFile[], nextPageToken?: string }> {
+    return this.listFilesInFolder(this.folderId, pageSize, pageToken);
+  }
+
+  // Cerca file per nome in una cartella specifica
+  async searchFilesInFolder(query: string, folderId: string): Promise<DriveFile[]> {
     if (!this.accessToken) {
       throw new Error('Access token non disponibile');
     }
 
     try {
       const params = new URLSearchParams({
-        q: `'${this.folderId}' in parents and name contains '${query}' and trashed=false`,
+        q: `'${folderId}' in parents and name contains '${query}' and trashed=false`,
         fields: 'files(id, name, mimeType, size, createdTime, modifiedTime, webViewLink, webContentLink, parents)',
         orderBy: 'modifiedTime desc'
       });
@@ -94,8 +99,13 @@ export class GoogleDriveService {
     }
   }
 
-  // Carica un nuovo file
-  async uploadFile(file: File, fileName?: string): Promise<DriveFile> {
+  // Cerca file per nome (mantenuto per compatibilità)
+  async searchFiles(query: string): Promise<DriveFile[]> {
+    return this.searchFilesInFolder(query, this.folderId);
+  }
+
+  // Carica un nuovo file in una cartella specifica
+  async uploadFileToFolder(file: File, parentId: string, fileName?: string): Promise<DriveFile> {
     if (!this.accessToken) {
       throw new Error('Access token non disponibile');
     }
@@ -103,7 +113,7 @@ export class GoogleDriveService {
     try {
       const metadata = {
         name: fileName || file.name,
-        parents: [this.folderId]
+        parents: [parentId]
       };
 
       const form = new FormData();
@@ -130,6 +140,11 @@ export class GoogleDriveService {
     }
   }
 
+  // Carica un nuovo file (mantenuto per compatibilità)
+  async uploadFile(file: File, fileName?: string): Promise<DriveFile> {
+    return this.uploadFileToFolder(file, this.folderId, fileName);
+  }
+
   // Elimina un file
   async deleteFile(fileId: string): Promise<void> {
     if (!this.accessToken) {
@@ -153,8 +168,8 @@ export class GoogleDriveService {
     }
   }
 
-  // Crea una cartella
-  async createFolder(name: string, parentId?: string): Promise<DriveFile> {
+  // Crea una cartella in una cartella specifica
+  async createFolderInParent(name: string, parentId: string): Promise<DriveFile> {
     if (!this.accessToken) {
       throw new Error('Access token non disponibile');
     }
@@ -163,7 +178,7 @@ export class GoogleDriveService {
       const metadata = {
         name: name,
         mimeType: 'application/vnd.google-apps.folder',
-        parents: [parentId || this.folderId]
+        parents: [parentId]
       };
 
       const response = await fetch('https://www.googleapis.com/drive/v3/files?fields=id,name,mimeType,createdTime,modifiedTime', {
@@ -185,6 +200,11 @@ export class GoogleDriveService {
       console.error('Errore nella creazione della cartella:', error);
       throw new Error('Impossibile creare la cartella');
     }
+  }
+
+  // Crea una cartella (mantenuto per compatibilità)
+  async createFolder(name: string, parentId?: string): Promise<DriveFile> {
+    return this.createFolderInParent(name, parentId || this.folderId);
   }
 
   // Ottieni le informazioni di un file

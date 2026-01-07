@@ -16,7 +16,10 @@ import {
   AlertCircle,
   LogIn,
   User,
-  LogOut
+  LogOut,
+  Folder,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { driveService, DriveFile } from '@/lib/googleDrive';
 import useGoogleAuth from '@/hooks/useGoogleAuth';
@@ -34,6 +37,12 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ onClose }) => {
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
   const [showCreateFolder, setShowCreateFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
+  
+  // Stati per la navigazione delle directory
+  const [currentFolderId, setCurrentFolderId] = useState('root');
+  const [folderPath, setFolderPath] = useState<Array<{id: string, name: string}>>([
+    { id: 'root', name: 'Google Drive' }
+  ]);
 
   // Hook per autenticazione Google
   const {
@@ -59,15 +68,16 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ onClose }) => {
     }
   }, [isAuthenticated]);
 
-  const loadFiles = async () => {
+  const loadFiles = async (folderId?: string) => {
     if (!isAuthenticated) return;
 
+    const targetFolderId = folderId || currentFolderId;
     setLoading(true);
     setError(null);
     try {
       const accessToken = await getValidAccessToken();
       await driveService.initializeWithUserCredentials(accessToken);
-      const result = await driveService.listFiles(50);
+      const result = await driveService.listFilesInFolder(targetFolderId, 50);
       setFiles(result.files);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Errore nel caricamento dei file');
@@ -89,7 +99,7 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ onClose }) => {
     try {
       const accessToken = await getValidAccessToken();
       await driveService.initializeWithUserCredentials(accessToken);
-      const searchResults = await driveService.searchFiles(searchQuery);
+      const searchResults = await driveService.searchFilesInFolder(searchQuery, currentFolderId);
       setFiles(searchResults);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Errore nella ricerca');
@@ -107,7 +117,7 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ onClose }) => {
     try {
       const accessToken = await getValidAccessToken();
       await driveService.initializeWithUserCredentials(accessToken);
-      await driveService.uploadFile(file);
+      await driveService.uploadFileToFolder(file, currentFolderId);
       await loadFiles();
       event.target.value = '';
     } catch (err) {
@@ -143,13 +153,39 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ onClose }) => {
     try {
       const accessToken = await getValidAccessToken();
       await driveService.initializeWithUserCredentials(accessToken);
-      await driveService.createFolder(newFolderName);
+      await driveService.createFolderInParent(newFolderName, currentFolderId);
       setNewFolderName('');
       setShowCreateFolder(false);
       await loadFiles();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Errore nella creazione della cartella');
     }
+  };
+
+  // Navigazione nelle cartelle
+  const handleFolderClick = async (folder: DriveFile) => {
+    if (folder.mimeType !== 'application/vnd.google-apps.folder') return;
+    
+    setCurrentFolderId(folder.id);
+    setFolderPath(prev => [...prev, { id: folder.id, name: folder.name }]);
+    await loadFiles(folder.id);
+  };
+
+  const handleBreadcrumbClick = async (folderId: string, index: number) => {
+    setCurrentFolderId(folderId);
+    setFolderPath(prev => prev.slice(0, index + 1));
+    await loadFiles(folderId);
+  };
+
+  const handleBackFolder = async () => {
+    if (folderPath.length <= 1) return;
+    
+    const parentPath = folderPath.slice(0, -1);
+    const parentFolder = parentPath[parentPath.length - 1];
+    
+    setCurrentFolderId(parentFolder.id);
+    setFolderPath(parentPath);
+    await loadFiles(parentFolder.id);
   };
 
   const handleSelectFile = (fileId: string) => {
@@ -168,7 +204,7 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ onClose }) => {
     if (mimeType.startsWith('image/')) return <Image className="w-5 h-5 text-blue-500" />;
     if (mimeType.startsWith('video/')) return <Video className="w-5 h-5 text-red-500" />;
     if (mimeType.startsWith('audio/')) return <Music className="w-5 h-5 text-green-500" />;
-    if (mimeType === 'application/vnd.google-apps.folder') return <FileText className="w-5 h-5 text-yellow-500" />;
+    if (mimeType === 'application/vnd.google-apps.folder') return <Folder className="w-5 h-5 text-yellow-500" />;
     if (mimeType.includes('zip') || mimeType.includes('rar')) return <Archive className="w-5 h-5 text-purple-500" />;
     return <File className="w-5 h-5 text-gray-500" />;
   };
@@ -282,6 +318,36 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ onClose }) => {
             </div>
           </div>
 
+          {/* Breadcrumb Navigation */}
+          <div className="flex items-center gap-2 mb-4 p-3 bg-gray-50 rounded-md">
+            <button
+              onClick={handleBackFolder}
+              disabled={folderPath.length <= 1}
+              className="px-3 py-1 text-sm bg-gray-600 text-white rounded-md hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              Indietro
+            </button>
+            
+            <div className="flex items-center gap-1 text-sm text-gray-600">
+              {folderPath.map((folder, index) => (
+                <React.Fragment key={folder.id}>
+                  <button
+                    onClick={() => handleBreadcrumbClick(folder.id, index)}
+                    className={`hover:text-blue-600 ${
+                      index === folderPath.length - 1 ? 'font-medium text-blue-600' : 'text-gray-600'
+                    }`}
+                  >
+                    {folder.name}
+                  </button>
+                  {index < folderPath.length - 1 && (
+                    <ChevronRight className="w-4 h-4 text-gray-400" />
+                  )}
+                </React.Fragment>
+              ))}
+            </div>
+          </div>
+
           {/* Actions Bar */}
           <div className="flex flex-wrap items-center gap-4">
             <div className="flex-1 max-w-md">
@@ -328,7 +394,7 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ onClose }) => {
             </button>
 
             <button
-              onClick={loadFiles}
+              onClick={() => loadFiles()}
               disabled={loading}
               className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 disabled:opacity-50 flex items-center gap-2"
             >
@@ -446,7 +512,16 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ onClose }) => {
                         <div className="flex items-center">
                           {getFileIcon(file.mimeType)}
                           <div className="ml-3">
-                            <div className="text-sm font-medium text-gray-900">{file.name}</div>
+                            {file.mimeType === 'application/vnd.google-apps.folder' ? (
+                              <button
+                                onClick={() => handleFolderClick(file)}
+                                className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline"
+                              >
+                                {file.name}
+                              </button>
+                            ) : (
+                              <div className="text-sm font-medium text-gray-900">{file.name}</div>
+                            )}
                             <div className="text-xs text-gray-500">{file.mimeType}</div>
                           </div>
                         </div>
