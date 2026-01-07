@@ -62,7 +62,7 @@ Se non hai ancora configurato un repository remoto:
 # Scegli opzione 8 per configurare remote
 
 # Opzione 2: Comando manuale
-git remote add origin https://github.com/tuousername/lyfeumbria-manager.git
+git remote add origin https://github.com/welcomepeoplerm/lum.git
 git push -u origin master
 ```
 
@@ -145,7 +145,8 @@ cd C:\PROGETTI\LYFE
 ```bash
 # Rimuovi e ri-aggiungi il remote
 git remote remove origin
-git remote add origin https://github.com/username/repository.git
+git remote add origin https://github.com/welcomepeoplerm/lum.git
+
 ```
 
 ---
