@@ -1,13 +1,15 @@
 @echo off
 chcp 65001 > nul
-title LyfeUmbria Git Manager
+setlocal enabledelayedexpansion
+title LyfeUmbria Git Manager - welcomepeoplerm/lum
 color 0A
 
 :menu
 cls
 echo.
 echo ==========================================
-echo     🚀 LYFEUMBRIA GIT MANAGER 🚀
+echo   🚀 LYFEUMBRIA GIT MANAGER 🚀
+echo   Repository: welcomepeoplerm/lum
 echo ==========================================
 echo.
 echo  1. 📊 Git Status (verifica modifiche)
@@ -133,15 +135,31 @@ echo.
 echo Remote attuali:
 git remote -v
 echo.
-set /p remote_url="🔗 Inserisci URL del repository remoto (es: https://github.com/user/repo.git): "
-if not "%remote_url%"=="" (
+echo Repository configurato per: welcomepeoplerm/lum
+set remote_url=https://github.com/welcomepeoplerm/lum.git
+echo 🔗 URL repository: %remote_url%
+echo.
+set /p confirm="✅ Configurare questo repository? (y/n): "
+if "%confirm%"=="y" (
+    git remote remove origin 2>nul
     git remote add origin "%remote_url%"
-    echo ✅ Remote origin aggiunto!
+    echo ✅ Remote origin configurato per welcomepeoplerm/lum!
     echo.
-    echo Per il primo push usa:
+    echo 📋 Comandi per il primo push:
     echo git push -u origin master
+    echo.
+    set /p first_push="🚀 Eseguire il primo push ora? (y/n): "
+    if "!first_push!"=="y" (
+        echo ⬆️ Primo push in corso...
+        git push -u origin master
+        if !errorlevel! equ 0 (
+            echo ✅ Push completato con successo!
+        ) else (
+            echo ❌ Errore durante il push!
+        )
+    )
 ) else (
-    echo ❌ URL non inserito!
+    echo ❌ Configurazione annullata!
 )
 echo.
 pause
