@@ -1,0 +1,38 @@
+@import "tailwindcss";
+
+:root {
+  --background: #FFFFFF;
+  --foreground: #46433c;
+  --primary: #8d9c71;
+  --primary-hover: #7a8a60;
+  --secondary: #d17f3d;
+  --secondary-hover: #b86a2e;
+  --dark: #46433c;
+  --light: #FFFFFF;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #46433c;
+    --foreground: #FFFFFF;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Force black text for inputs to ensure visibility in all themes */
+input, textarea, select {
+  color: #000000;
+}
+

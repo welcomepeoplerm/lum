@@ -1,0 +1,11 @@
+DEPLOY IN PROD:
+
+# 1. Ferma server sviluppo (se attivo)
+Get-Process | Where-Object {$_.ProcessName -eq "node"} | Stop-Process -Force
+# 2. Deploy
+npm run deploy
+# 3. Controlla il sito
+# https://lyfeumbria.web.app
+
+DEPLOY IN SVIL:
+npm run dev

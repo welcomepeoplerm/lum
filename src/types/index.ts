@@ -1,0 +1,75 @@
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  role: 'admin' | 'user';
+  createdAt: Date;
+}
+
+export interface Todo {
+  id: string;
+  lavorodaeseguire: string;
+  datainserimento: Date;
+  dataesecuzione: Date | null;
+  Note: string;
+  Eseguito: boolean;
+  unita?: string; // Relazione con collezione Unita (opzionale)
+  userId: string;
+}
+
+export interface LoginCredentials {
+  email: string;
+  password: string;
+}
+
+export interface RegisterData {
+  email: string;
+  password: string;
+  name: string;
+  role?: 'admin' | 'user';
+}
+
+export interface Unita {
+  id: string;
+  'nomeunità': string;
+  'descrizioneunita': string;
+  createdAt?: Date;
+}
+
+export interface Ricarica {
+  id: string;
+  dataRicarica: Date;
+  litriRicarica: number;
+  importoRicaricato: number;
+  indicatoreRicarica: number;
+  indicatoreRicaricato: number;
+  diffRicaricata: number; // Calcolato: indicatoreRicaricato - indicatoreRicarica
+  pagato: boolean;
+  dataPagamento?: Date | null;
+  createdAt: Date;
+  userId: string;
+}
+
+export interface Scadenza {
+  id: string;
+  titolo: string;
+  descrizione?: string;
+  categoria: 'tributi' | 'bollette' | 'manutenzione' | 'documenti';
+  dataScadenza: Date;
+  importo?: number;
+  ricorrente: boolean;
+  frequenza?: 'mensile' | 'trimestrale' | 'semestrale' | 'annuale';
+  priorita: 'bassa' | 'media' | 'alta' | 'critica';
+  completata: boolean;
+  dataCompletamento?: Date | null;
+  note?: string;
+  createdAt: Date;
+  userId: string;
+}
+
+export interface Settore {
+  id: string;
+  nome: string;
+  createdAt: Date;
+  userId: string;
+}
