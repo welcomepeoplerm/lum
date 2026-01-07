@@ -99,6 +99,37 @@ export class GoogleDriveService {
     }
   }
 
+  // Cerca file per nome in tutto Google Drive
+  async searchFilesGlobal(query: string): Promise<DriveFile[]> {
+    if (!this.accessToken) {
+      throw new Error('Access token non disponibile');
+    }
+
+    try {
+      const params = new URLSearchParams({
+        q: `name contains '${query}' and trashed=false`,
+        fields: 'files(id, name, mimeType, size, createdTime, modifiedTime, webViewLink, webContentLink, parents)',
+        orderBy: 'modifiedTime desc'
+      });
+
+      const response = await fetch(`https://www.googleapis.com/drive/v3/files?${params.toString()}`, {
+        headers: {
+          'Authorization': `Bearer ${this.accessToken}`,
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Errore API: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      return data.files || [];
+    } catch (error) {
+      console.error('Errore nella ricerca globale:', error);
+      throw new Error('Errore durante la ricerca globale dei file');
+    }
+  }
+
   // Cerca file per nome (mantenuto per compatibilità)
   async searchFiles(query: string): Promise<DriveFile[]> {
     return this.searchFilesInFolder(query, this.folderId);

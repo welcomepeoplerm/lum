@@ -19,7 +19,8 @@ import {
   LogOut,
   Folder,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Globe
 } from 'lucide-react';
 import { driveService, DriveFile } from '@/lib/googleDrive';
 import useGoogleAuth from '@/hooks/useGoogleAuth';
@@ -43,6 +44,9 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ onClose }) => {
   const [folderPath, setFolderPath] = useState<Array<{id: string, name: string}>>([
     { id: 'root', name: 'Google Drive' }
   ]);
+  
+  // Stato per la ricerca globale
+  const [isGlobalSearch, setIsGlobalSearch] = useState(false);
 
   // Hook per autenticazione Google
   const {
@@ -99,7 +103,14 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ onClose }) => {
     try {
       const accessToken = await getValidAccessToken();
       await driveService.initializeWithUserCredentials(accessToken);
-      const searchResults = await driveService.searchFilesInFolder(searchQuery, currentFolderId);
+      
+      let searchResults;
+      if (isGlobalSearch) {
+        searchResults = await driveService.searchFilesGlobal(searchQuery);
+      } else {
+        searchResults = await driveService.searchFilesInFolder(searchQuery, currentFolderId);
+      }
+      
       setFiles(searchResults);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Errore nella ricerca');
@@ -355,13 +366,27 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ onClose }) => {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <input
                   type="text"
-                  placeholder="Cerca documenti..."
+                  placeholder={isGlobalSearch ? "Cerca in tutto Google Drive..." : "Cerca nella cartella corrente..."}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
+            </div>
+
+            {/* Toggle per ricerca globale */}
+            <div className="flex items-center gap-2">
+              <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={isGlobalSearch}
+                  onChange={(e) => setIsGlobalSearch(e.target.checked)}
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <Globe className={`w-4 h-4 ${isGlobalSearch ? 'text-blue-600' : 'text-gray-400'}`} />
+                Ricerca globale
+              </label>
             </div>
 
             <button
