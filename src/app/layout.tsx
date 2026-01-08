@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "LyfeUmbria Manager - Sistema di Gestione Turistico",
-  description: "Sistema di gestione per casale turistico con autenticazione, gestione utenti e todo list",
+  description: "Sistema di gestione per casale turistico con autenticazione, gestione utenti e attività e manutenzione",
 };
 
 export default function RootLayout({

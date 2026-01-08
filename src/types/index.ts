@@ -73,3 +73,20 @@ export interface Settore {
   createdAt: Date;
   userId: string;
 }
+
+export interface Fornitore {
+  id: string;
+  ragioneSociale: string;
+  settoreId: string; // ID del settore dalla collezione settori
+  referente: string;
+  telefono?: string;
+  mobile?: string;
+  email: string;
+  sedeLegale?: string;
+  codiceFiscale?: string;
+  partitaIva?: string;
+  note?: string;
+  attivo: boolean;
+  createdAt: Date;
+  userId: string;
+}

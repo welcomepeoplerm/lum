@@ -178,11 +178,11 @@ export default function TodoList() {
       worksheet['!cols'] = columnWidths;
 
       // Aggiunge il worksheet al workbook
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'TodoList');
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Attività e manutenzione');
 
       // Genera il nome del file con data corrente
       const now = new Date();
-      const fileName = `TodoList_${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}.xlsx`;
+      const fileName = `Attivita_manutenzione_${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}.xlsx`; 
 
       // Scarica il file
       XLSX.writeFile(workbook, fileName);
@@ -200,7 +200,7 @@ export default function TodoList() {
       let printContent = `
         <html>
           <head>
-            <title>TodoList - ${new Date().toLocaleDateString('it-IT')}</title>
+            <title>Attività e manutenzione - ${new Date().toLocaleDateString('it-IT')}</title>
             <style>
               body { font-family: Arial, sans-serif; margin: 20px; }
               h1 { text-align: center; color: #46433c; margin-bottom: 30px; }
@@ -231,7 +231,7 @@ export default function TodoList() {
             </style>
           </head>
           <body>
-            <h1>📋 To-Do List</h1>
+            <h1>📋 Attività e manutenzione</h1>
             <div class="info">
               Stampato il: ${new Date().toLocaleDateString('it-IT', {
                 day: '2-digit',
@@ -585,7 +585,7 @@ export default function TodoList() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
         <div className="flex items-center">
           <List className="h-6 w-6 mr-2" style={{color: '#8d9c71'}} />
-          <h2 className="text-xl font-semibold text-gray-900">To-Do List</h2>
+          <h2 className="text-xl font-semibold text-gray-900">Attività e manutenzione</h2>
         </div>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
           <button

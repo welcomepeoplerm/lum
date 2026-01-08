@@ -10,8 +10,10 @@ import UserManagement from '@/components/UserManagement';
 import RicaricaManagement from '@/components/RicaricaManagement';
 import ScadenzarioManager from '@/components/ScadenzarioManager';
 import SettoriManagement from '@/components/SettoriManagement';
+import FornitoriManagement from '@/components/FornitoriManagement';
 import DocumentManagement from '@/components/DocumentManagement';
 import ChangePassword from '@/components/ChangePassword';
+import SessionTimeoutWarning from '@/components/SessionTimeoutWarning';
 import { 
   LayoutDashboard, 
   Users, 
@@ -39,11 +41,13 @@ export default function Dashboard() {
   const [scadenzeLoading, setScadenzeLoading] = useState(true);
   const [users, setUsers] = useState<any[]>([]);
   const [usersLoading, setUsersLoading] = useState(true);
+  const [fornitori, setFornitori] = useState<any[]>([]);
+  const [fornitoriLoading, setFornitoriLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [scadenzarioFilter, setScadenzarioFilter] = useState<string | null>(null);
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [fornitoriSubmenuOpen, setFornitoriSubmenuOpen] = useState(false);
-  const { user, logout } = useAuth();
+  const { user, logout, showSessionWarning, sessionWarningTimeLeft, extendSession } = useAuth();
 
   // Carica i todos per il conteggio nella dashboard
   const loadTodos = async () => {
@@ -165,6 +169,33 @@ export default function Dashboard() {
     }
   };
 
+  // Carica i fornitori per il conteggio nella dashboard
+  const loadFornitori = async () => {
+    try {
+      setFornitoriLoading(true);
+      const querySnapshot = await getDocs(collection(db, 'fornitori'));
+      const fornitoriData: any[] = [];
+      
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        fornitoriData.push({
+          id: doc.id,
+          ragioneSociale: data.ragioneSociale,
+          settoreId: data.settoreId,
+          attivo: data.attivo,
+          createdAt: data.createdAt ? data.createdAt.toDate() : new Date(),
+          ...data
+        });
+      });
+      
+      setFornitori(fornitoriData);
+    } catch (error) {
+      console.error('Errore nel caricamento dei fornitori:', error);
+    } finally {
+      setFornitoriLoading(false);
+    }
+  };
+
   // Funzioni helper per le scadenze
   const isScadenzaImminente = (dataScadenza: Date) => {
     const oggi = new Date();
@@ -188,6 +219,7 @@ export default function Dashboard() {
     loadRicariche();
     loadScadenze();
     loadUsers();
+    loadFornitori();
   }, []);
 
   const handleLogout = async () => {
@@ -206,7 +238,7 @@ export default function Dashboard() {
       adminOnly: false
     },
     { 
-      name: 'To-Do List', 
+      name: 'Attività e manutenzione', 
       key: 'todos' as const, 
       icon: List,
       adminOnly: false
@@ -415,7 +447,7 @@ export default function Dashboard() {
             
             <h2 className="text-xl font-semibold capitalize" style={{color: '#ffffff'}}>
               {activeTab === 'overview' && 'Dashboard'}
-              {activeTab === 'todos' && 'To-Do List'}
+              {activeTab === 'todos' && 'Attività e manutenzione'}
               {activeTab === 'ricariche' && 'Ricariche GAS'}              {activeTab === 'scadenzario' && 'Scadenzario'}              {activeTab === 'documenti' && 'Gestione Documentale'}
               {activeTab === 'fornitori' && 'Gestione Fornitori'}
               {activeTab === 'settori' && 'Settori Fornitori'}
@@ -495,7 +527,7 @@ export default function Dashboard() {
                         <div className="flex items-center">
                           <List className="h-8 w-8" style={{color: '#8d9c71'}} />
                           <div className="ml-3">
-                            <h4 className="text-lg font-medium" style={{color: '#46433c'}}>To-Do List</h4>
+                            <h4 className="text-lg font-medium" style={{color: '#46433c'}}>Attività e manutenzione</h4>
                             <p className="text-sm" style={{color: '#8d9c71'}}>Gestisci le attività del casale</p>
                           </div>
                         </div>
@@ -567,15 +599,41 @@ export default function Dashboard() {
                         </div>
                       </div>
                     </div>
+
+                    <div className="p-4 rounded-lg" style={{backgroundColor: '#e8f5e9'}}>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center">
+                          <Building className="h-8 w-8" style={{color: '#2e7d32'}} />
+                          <div className="ml-3">
+                            <h4 className="text-lg font-medium" style={{color: '#1b5e20'}}>Gestione Fornitori</h4>
+                            <p className="text-sm" style={{color: '#388e3c'}}>Visualizza i fornitori del sistema</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          {fornitoriLoading ? (
+                            <div className="text-sm text-gray-500">Caricamento...</div>
+                          ) : (
+                            <div className="space-y-1">
+                              <div className="text-sm" style={{color: '#1b5e20'}}>
+                                <span className="font-medium">Totale:</span> {fornitori.length}
+                              </div>
+                              <div className="text-sm" style={{color: '#1b5e20'}}>
+                                <span className="font-medium">Attivi:</span> {fornitori.filter(f => f.attivo).length}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                   
-                  {/* Card grafico To-Do List */}
+                  {/* Card grafico Attività e manutenzione */}
                   <div className="mt-6 bg-white overflow-hidden shadow rounded-lg">
                     <div className="px-4 py-5 sm:p-6">
                       <div className="flex items-center justify-between mb-6">
                         <div className="flex items-center">
                           <List className="h-6 w-6" style={{color: '#8d9c71'}} />
-                          <h3 className="ml-2 text-lg leading-6 font-medium text-gray-900">Statistiche To-Do List</h3>
+                          <h3 className="ml-2 text-lg leading-6 font-medium text-gray-900">Statistiche Attività e manutenzione</h3>
                         </div>
                         <div className="text-sm text-gray-500">
                           Totale: {todos.length} attività
@@ -864,13 +922,7 @@ export default function Dashboard() {
           {activeTab === 'scadenzario' && <ScadenzarioManager initialFilter={scadenzarioFilter} onFilterChange={() => setScadenzarioFilter(null)} />}
           {activeTab === 'documenti' && <DocumentManagement />}
           {activeTab === 'settori' && user?.role === 'admin' && <SettoriManagement />}
-          {activeTab === 'fornitori' && user?.role === 'admin' && (
-            <div className="text-center py-12">
-              <Building className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h2 className="text-xl font-medium text-gray-900 mb-2">Gestione Fornitori</h2>
-              <p className="text-gray-600">Funzionalità in arrivo...</p>
-            </div>
-          )}
+          {activeTab === 'fornitori' && user?.role === 'admin' && <FornitoriManagement />}
           {activeTab === 'users' && user?.role === 'admin' && <UserManagement />}
         </main>
       </div>
@@ -878,6 +930,15 @@ export default function Dashboard() {
       {/* Modal Cambio Password */}
       {showChangePassword && (
         <ChangePassword onClose={() => setShowChangePassword(false)} />
+      )}
+      
+      {/* Session Timeout Warning */}
+      {showSessionWarning && (
+        <SessionTimeoutWarning
+          warningTimeLeft={sessionWarningTimeLeft}
+          onExtendSession={extendSession}
+          onLogout={logout}
+        />
       )}
     </div>
   );

@@ -9,3 +9,11 @@ npm run deploy
 
 DEPLOY IN SVIL:
 npm run dev
+
+
+# Menu interattivo
+.\git-manager.ps1
+
+# Comandi diretti
+.\git-manager.ps1 -Action commit -Message "Il mio messaggio"
+.\git-manager.ps1 -Action sync

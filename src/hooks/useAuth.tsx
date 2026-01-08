@@ -18,6 +18,10 @@ interface AuthContextType {
   login: (credentials: LoginCredentials) => Promise<void>;
   register: (data: RegisterData) => Promise<void>;
   logout: () => Promise<void>;
+  resetInactivityTimer: () => void;
+  showSessionWarning: boolean;
+  sessionWarningTimeLeft: number;
+  extendSession: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -25,6 +29,61 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  
+  // Gestione timeout sessione - 10 minuti di inattività
+  const INACTIVITY_TIMEOUT = 10 * 60 * 1000; // 10 minuti in millisecondi
+  const WARNING_TIME = 2 * 60 * 1000; // Warning 2 minuti prima
+  const [inactivityTimer, setInactivityTimer] = useState<NodeJS.Timeout | null>(null);
+  const [warningTimer, setWarningTimer] = useState<NodeJS.Timeout | null>(null);
+  const [showSessionWarning, setShowSessionWarning] = useState(false);
+  const [sessionWarningTimeLeft, setSessionWarningTimeLeft] = useState(0);
+
+  // Gestione scadenza sessione
+  const handleSessionExpiry = async () => {
+    try {
+      setShowSessionWarning(false);
+      await signOut(auth);
+      setUser(null);
+      console.log('🚪 Logout automatico per inattività completato');
+    } catch (error) {
+      console.error('💥 Errore durante logout automatico:', error);
+    }
+  };
+
+  // Funzione per resettare il timer di inattività
+  const resetInactivityTimer = () => {
+    // Pulisce i timer esistenti
+    if (inactivityTimer) {
+      clearTimeout(inactivityTimer);
+    }
+    if (warningTimer) {
+      clearTimeout(warningTimer);
+    }
+    
+    // Nasconde il warning se era attivo
+    setShowSessionWarning(false);
+
+    // Timer per il warning (8 minuti - 2 minuti prima della scadenza)
+    const newWarningTimer = setTimeout(() => {
+      setShowSessionWarning(true);
+      setSessionWarningTimeLeft(120); // 2 minuti in secondi
+    }, INACTIVITY_TIMEOUT - WARNING_TIME);
+
+    // Timer per la scadenza effettiva (10 minuti)
+    const newTimer = setTimeout(() => {
+      console.log('🕒 Sessione scaduta per inattività (10 minuti)');
+      handleSessionExpiry();
+    }, INACTIVITY_TIMEOUT);
+
+    setWarningTimer(newWarningTimer);
+    setInactivityTimer(newTimer);
+  };
+
+  // Estende la sessione quando l'utente sceglie di continuare
+  const extendSession = () => {
+    setShowSessionWarning(false);
+    resetInactivityTimer();
+  };
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -49,6 +108,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               createdAt: userData.createdAt.toDate ? userData.createdAt.toDate() : new Date(userData.createdAt)
             });
             console.log('✅ User set successfully!');
+            // Avvia il timer di inattività quando l'utente è autenticato
+            resetInactivityTimer();
           } catch (error) {
             console.error('💥 Error setting user:', error);
           }
@@ -74,6 +135,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               role: 'user',
               createdAt: new Date()
             });
+            // Avvia il timer di inattività
+            resetInactivityTimer();
           } catch (error) {
             console.error('💥 Error creating user document:', error);
             setUser(null);
@@ -82,11 +145,56 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         console.log('🚪 User logged out');
         setUser(null);
+        // Pulisce i timer quando l'utente si disconnette
+        if (inactivityTimer) {
+          clearTimeout(inactivityTimer);
+          setInactivityTimer(null);
+        }
+        if (warningTimer) {
+          clearTimeout(warningTimer);
+          setWarningTimer(null);
+        }
+        setShowSessionWarning(false);
       }
       setLoading(false);
     });
 
     return unsubscribe;
+  }, []);
+
+  // Effetto per gestire gli eventi di attività dell'utente
+  useEffect(() => {
+    if (!user) return;
+
+    const activityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+    
+    const handleUserActivity = () => {
+      resetInactivityTimer();
+    };
+
+    // Aggiunge listener per tutti gli eventi di attività
+    activityEvents.forEach(event => {
+      document.addEventListener(event, handleUserActivity, true);
+    });
+
+    // Cleanup dei listener
+    return () => {
+      activityEvents.forEach(event => {
+        document.removeEventListener(event, handleUserActivity, true);
+      });
+    };
+  }, [user]);
+
+  // Cleanup dei timer quando il componente viene smontato
+  useEffect(() => {
+    return () => {
+      if (inactivityTimer) {
+        clearTimeout(inactivityTimer);
+      }
+      if (warningTimer) {
+        clearTimeout(warningTimer);
+      }
+    };
   }, []);
 
   const login = async (credentials: LoginCredentials) => {
@@ -105,6 +213,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = async () => {
+    // Pulisce i timer prima del logout
+    if (inactivityTimer) {
+      clearTimeout(inactivityTimer);
+      setInactivityTimer(null);
+    }
+    if (warningTimer) {
+      clearTimeout(warningTimer);
+      setWarningTimer(null);
+    }
+    setShowSessionWarning(false);
     await signOut(auth);
   };
 
@@ -113,7 +231,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     loading,
     login,
     register,
-    logout
+    logout,
+    resetInactivityTimer,
+    showSessionWarning,
+    sessionWarningTimeLeft,
+    extendSession
   };
 
   return (
