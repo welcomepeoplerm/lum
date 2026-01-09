@@ -34,7 +34,8 @@ const ScadenzarioManager = ({ initialFilter = null, onFilterChange }: Scadenzari
     ricorrente: false,
     frequenza: 'mensile' as 'mensile' | 'trimestrale' | 'semestrale' | 'annuale',
     priorita: 'media' as 'bassa' | 'media' | 'alta' | 'critica',
-    note: ''
+    note: '',
+    emails: [''] // Nuovo campo: array di email
   });
 
   useEffect(() => {
@@ -81,7 +82,8 @@ const ScadenzarioManager = ({ initialFilter = null, onFilterChange }: Scadenzari
           dataCompletamento: data.dataCompletamento ? data.dataCompletamento.toDate() : null,
           note: data.note || '',
           createdAt: data.createdAt ? data.createdAt.toDate() : new Date(),
-          userId: data.userId || user.id
+          userId: data.userId || user.id,
+          emails: data.emails || []
         });
       });
       
@@ -103,7 +105,8 @@ const ScadenzarioManager = ({ initialFilter = null, onFilterChange }: Scadenzari
       ricorrente: false,
       frequenza: 'mensile',
       priorita: 'media',
-      note: ''
+      note: '',
+      emails: ['']
     });
     setEditingScadenza(null);
     setShowForm(false);
@@ -127,7 +130,8 @@ const ScadenzarioManager = ({ initialFilter = null, onFilterChange }: Scadenzari
         dataCompletamento: null,
         note: formData.note.trim(),
         createdAt: new Date(),
-        userId: user.id
+        userId: user.id,
+        emails: formData.emails.filter(e => e && e.trim() !== '')
       };
 
       if (editingScadenza) {
@@ -178,8 +182,47 @@ const ScadenzarioManager = ({ initialFilter = null, onFilterChange }: Scadenzari
       ricorrente: scadenza.ricorrente,
       frequenza: scadenza.frequenza || 'mensile',
       priorita: scadenza.priorita,
-      note: scadenza.note || ''
+      note: scadenza.note || '',
+      emails: scadenza.emails && scadenza.emails.length > 0 ? scadenza.emails : ['']
     });
+                {/* Email utenti associati */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Utendi da avvisare:
+                  </label>
+                  {formData.emails.map((email, idx) => (
+                    <div key={idx} className="flex items-center mb-2">
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={e => {
+                          const newEmails = [...formData.emails];
+                          newEmails[idx] = e.target.value;
+                          setFormData({ ...formData, emails: newEmails });
+                        }}
+                        className="w-full border border-gray-300 rounded-md px-3 py-2"
+                        placeholder="Email utente"
+                      />
+                      <button
+                        type="button"
+                        className="ml-2 px-2 py-1 text-sm text-white bg-red-500 rounded cursor-pointer"
+                        onClick={() => {
+                          const newEmails = formData.emails.filter((_, i) => i !== idx);
+                          setFormData({ ...formData, emails: newEmails.length ? newEmails : [''] });
+                        }}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    className="mt-1 px-3 py-1 text-sm text-white bg-green-600 rounded cursor-pointer"
+                    onClick={() => setFormData({ ...formData, emails: [...formData.emails, ''] })}
+                  >
+                    + Aggiungi email
+                  </button>
+                </div>
     setEditingScadenza(scadenza);
     setShowForm(true);
   };
@@ -787,31 +830,121 @@ const ScadenzarioManager = ({ initialFilter = null, onFilterChange }: Scadenzari
                   <option value="critica">Critica</option>
                 </select>
               </div>
+            </div>
 
-              <div className="flex items-center space-x-4">
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={formData.ricorrente}
-                    onChange={(e) => setFormData({ ...formData, ricorrente: e.target.checked })}
-                    className="mr-2"
-                  />
-                  <span className="text-sm text-gray-700">Ricorrente</span>
-                </label>
+            {/* Sezione Ricorrente - fuori dal grid */}
+            <div style={{ 
+              padding: '16px', 
+              backgroundColor: '#f9fafb', 
+              borderRadius: '8px',
+              border: '2px solid #e5e7eb'
+            }}>
+              <div 
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setFormData({ ...formData, ricorrente: !formData.ricorrente });
+                }}
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '12px',
+                  cursor: 'pointer',
+                  padding: '8px',
+                  borderRadius: '4px',
+                  transition: 'background-color 0.2s'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#e5e7eb'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+              >
+                <div style={{
+                  width: '20px',
+                  height: '20px',
+                  border: '2px solid #8d9c71',
+                  borderRadius: '4px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: formData.ricorrente ? '#8d9c71' : 'white'
+                }}>
+                  {formData.ricorrente && (
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                  )}
+                </div>
+                <span style={{ 
+                  userSelect: 'none',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  color: '#374151'
+                }}>
+                  Scadenza Ricorrente
+                </span>
+              </div>
                 
-                {formData.ricorrente && (
+              {formData.ricorrente && (
+                <div style={{ marginTop: '12px', marginLeft: '32px' }}>
+                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '4px' }}>
+                    Frequenza
+                  </label>
                   <select
                     value={formData.frequenza}
                     onChange={(e) => setFormData({ ...formData, frequenza: e.target.value as any })}
-                    className="border border-gray-300 rounded-md px-3 py-1 text-sm"
+                    style={{
+                      border: '1px solid #d1d5db',
+                      borderRadius: '6px',
+                      padding: '8px 12px',
+                      fontSize: '14px',
+                      width: '200px'
+                    }}
                   >
                     <option value="mensile">Mensile</option>
                     <option value="trimestrale">Trimestrale</option>
                     <option value="semestrale">Semestrale</option>
                     <option value="annuale">Annuale</option>
                   </select>
-                )}
-              </div>
+                </div>
+              )}
+            </div>
+
+            {/* Email utenti associati */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Utendi da avvisare:
+              </label>
+              {formData.emails.map((email, idx) => (
+                <div key={idx} className="flex items-center mb-2">
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={e => {
+                      const newEmails = [...formData.emails];
+                      newEmails[idx] = e.target.value;
+                      setFormData({ ...formData, emails: newEmails });
+                    }}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2"
+                    placeholder="Email utente"
+                  />
+                  <button
+                    type="button"
+                    className="ml-2 px-2 py-1 text-sm text-white bg-red-500 rounded cursor-pointer"
+                    onClick={() => {
+                      const newEmails = formData.emails.filter((_, i) => i !== idx);
+                      setFormData({ ...formData, emails: newEmails.length ? newEmails : [''] });
+                    }}
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                className="mt-1 px-3 py-1 text-sm text-white bg-green-600 rounded cursor-pointer"
+                onClick={() => setFormData({ ...formData, emails: [...formData.emails, ''] })}
+              >
+                + Aggiungi email
+              </button>
             </div>
 
             <div>

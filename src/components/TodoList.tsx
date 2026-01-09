@@ -647,7 +647,7 @@ export default function TodoList() {
             onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#8d9c71'}
           >
             <Plus className="h-4 w-4 mr-2" />
-            Nuovo Lavoro
+            Nuova Attività
           </button>
         </div>
       </div>
@@ -756,7 +756,7 @@ export default function TodoList() {
       {(showAddForm || editingTodo) && (
         <div className="mb-6 p-4 bg-gray-50 rounded-lg border">
           <h3 className="text-lg font-medium text-gray-900 mb-4">
-            {editingTodo ? 'Modifica Lavoro' : 'Nuovo Lavoro'}
+            {editingTodo ? 'Modifica Lavoro' : 'Nuova Attività'}
           </h3>
           <form 
             onSubmit={(e) => {

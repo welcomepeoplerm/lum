@@ -338,7 +338,7 @@ export default function SettoriManagement() {
           {settori.length === 0 && (
             <button
               onClick={seedSettori}
-              className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium bg-amber-100 text-amber-700 rounded-md hover:bg-amber-200 transition-colors"
+              className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium bg-amber-100 text-amber-700 rounded-md hover:bg-amber-200 transition-colors cursor-pointer"
             >
               Inizializza Settori
             </button>
@@ -346,7 +346,7 @@ export default function SettoriManagement() {
           
           <button
             onClick={exportToExcel}
-            className="inline-flex items-center justify-center px-3 py-2 text-sm font-medium bg-green-100 text-green-700 rounded-md hover:bg-green-200 transition-colors"
+            className="inline-flex items-center justify-center px-3 py-2 text-sm font-medium bg-green-100 text-green-700 rounded-md hover:bg-green-200 transition-colors cursor-pointer"
             title="Esporta in Excel"
           >
             <Download className="h-4 w-4 mr-1" />
@@ -355,7 +355,7 @@ export default function SettoriManagement() {
           
           <button
             onClick={printTable}
-            className="inline-flex items-center justify-center px-3 py-2 text-sm font-medium bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors"
+            className="inline-flex items-center justify-center px-3 py-2 text-sm font-medium bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors cursor-pointer"
             title="Stampa tabella"
           >
             <Printer className="h-4 w-4 mr-1" />
@@ -403,7 +403,7 @@ export default function SettoriManagement() {
                 </tr>
               ) : (
                 settori.map((settore) => (
-                  <tr key={settore.id} className="hover:bg-gray-50">
+                  <tr key={settore.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => handleEdit(settore)}>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">
                         {settore.nome}
@@ -418,13 +418,13 @@ export default function SettoriManagement() {
                       <div className="flex justify-end space-x-2">
                         <button
                           onClick={() => handleEdit(settore)}
-                          className="inline-flex items-center p-2 text-indigo-600 hover:text-indigo-900"
+                          className="inline-flex items-center p-2 text-indigo-600 hover:text-indigo-900 cursor-pointer"
                         >
                           <Edit2 className="h-4 w-4" />
                         </button>
                         <button
                           onClick={() => handleDelete(settore.id)}
-                          className="inline-flex items-center p-2 text-red-600 hover:text-red-900"
+                          className="inline-flex items-center p-2 text-red-600 hover:text-red-900 cursor-pointer"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
@@ -473,13 +473,13 @@ export default function SettoriManagement() {
                 <button
                   type="button"
                   onClick={resetForm}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 cursor-pointer"
                 >
                   Annulla
                 </button>
                 <button
                   type="submit"
-                  className="inline-flex items-center px-4 py-2 text-white rounded-md hover:opacity-90"
+                  className="inline-flex items-center px-4 py-2 text-white rounded-md hover:opacity-90 cursor-pointer"
                   style={{backgroundColor: '#8d9c71'}}
                 >
                   <Save className="h-4 w-4 mr-2" />

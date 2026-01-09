@@ -519,7 +519,7 @@ export default function FornitoriManagement() {
         <div className="flex flex-col sm:flex-row gap-2">
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className={`flex items-center justify-center px-3 py-2 rounded-md transition-colors ${
+            className={`flex items-center justify-center px-3 py-2 rounded-md transition-colors cursor-pointer ${
               showFilters
                 ? 'text-white'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -534,7 +534,7 @@ export default function FornitoriManagement() {
           
           <button
             onClick={exportToExcel}
-            className="inline-flex items-center justify-center px-3 py-2 text-sm font-medium bg-green-100 text-green-700 rounded-md hover:bg-green-200 transition-colors"
+            className="inline-flex items-center justify-center px-3 py-2 text-sm font-medium bg-green-100 text-green-700 rounded-md hover:bg-green-200 transition-colors cursor-pointer"
             title="Esporta in Excel"
           >
             <Download className="h-4 w-4 mr-1" />
@@ -543,7 +543,7 @@ export default function FornitoriManagement() {
           
           <button
             onClick={printTable}
-            className="inline-flex items-center justify-center px-3 py-2 text-sm font-medium bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors"
+            className="inline-flex items-center justify-center px-3 py-2 text-sm font-medium bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors cursor-pointer"
             title="Stampa tabella"
           >
             <Printer className="h-4 w-4 mr-1" />
@@ -685,7 +685,7 @@ export default function FornitoriManagement() {
               ) : (
                 filteredFornitori.map((fornitore) => (
                   <tr key={fornitore.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4 cursor-pointer" onClick={() => handleEdit(fornitore)}>
                       <div className="text-sm font-medium text-gray-900">
                         {fornitore.ragioneSociale}
                       </div>
@@ -732,7 +732,7 @@ export default function FornitoriManagement() {
                         {fornitore.mobile && (
                           <button
                             onClick={() => openWhatsApp(fornitore.mobile!, fornitore.ragioneSociale)}
-                            className="inline-flex items-center p-2 text-green-600 hover:text-green-900"
+                            className="inline-flex items-center p-2 text-green-600 hover:text-green-900 cursor-pointer"
                             title="Invia messaggio WhatsApp"
                           >
                             <MessageCircle className="h-4 w-4" />
@@ -740,14 +740,14 @@ export default function FornitoriManagement() {
                         )}
                         <button
                           onClick={() => handleEdit(fornitore)}
-                          className="inline-flex items-center p-2 text-indigo-600 hover:text-indigo-900"
+                          className="inline-flex items-center p-2 text-indigo-600 hover:text-indigo-900 cursor-pointer"
                           title="Modifica"
                         >
                           <Edit2 className="h-4 w-4" />
                         </button>
                         <button
                           onClick={() => handleDelete(fornitore.id)}
-                          className="inline-flex items-center p-2 text-red-600 hover:text-red-900"
+                          className="inline-flex items-center p-2 text-red-600 hover:text-red-900 cursor-pointer"
                           title="Elimina"
                         >
                           <Trash2 className="h-4 w-4" />

@@ -130,7 +130,8 @@ export default function Dashboard() {
           dataCompletamento: data.dataCompletamento ? data.dataCompletamento.toDate() : null,
           note: data.note || '',
           createdAt: data.createdAt ? data.createdAt.toDate() : new Date(),
-          userId: data.userId || user?.id || ''
+          userId: data.userId || user?.id || '',
+          emails: data.emails || []
         });
       });
       
@@ -239,9 +240,15 @@ export default function Dashboard() {
     },
     { 
       name: 'Attività e manutenzione', 
-      key: 'todos' as const, 
+      key: 'attivitaemanutenzione' as const, 
       icon: List,
-      adminOnly: false
+      adminOnly: false,
+      hasSubmenu: true,
+      submenu: [
+        { name: 'Attività Interne', key: 'todos' as const },
+        { name: 'Manutenzione', key: 'manutenzione' as const },
+        { name: 'Acquisti', key: 'acquisti' as const }
+      ]
     },
     { 
       name: 'Ricariche GAS', 
@@ -280,6 +287,7 @@ export default function Dashboard() {
     }
   ];
 
+  const [attivitaSubmenuOpen, setAttivitaSubmenuOpen] = useState(false);
   const filteredNavigation = navigation.filter(item => 
     !item.adminOnly || user?.role === 'admin'
   );
@@ -293,23 +301,38 @@ export default function Dashboard() {
         <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200" style={{backgroundColor: '#8d9c71'}}>
           <div className="flex items-center">
             <svg 
+              version="1.1" 
               xmlns="http://www.w3.org/2000/svg" 
-              viewBox="0 0 24 24" 
-              fill="none" 
-              stroke="currentColor" 
-              strokeWidth="1.5" 
-              strokeLinecap="round" 
-              strokeLinejoin="round" 
+              xmlnsXlink="http://www.w3.org/1999/xlink" 
+              viewBox="0 0 285 285" 
               className="w-10 h-10"
-              style={{color: '#ffffff'}}
+              style={{color: '#ffffff', fill: 'currentColor'}}
             >
-              <path d="M2 21h20" />
-              <path d="M5 21V10l7-5l4 2.857" />
-              <path d="M12 5v16" />
-              <path d="M16 21V12.5l4 2V21" />
-              <path d="M8 21v-3a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v3" />
-              <path d="M18 16h.01" strokeWidth="2"/>
-              <path d="M16 6h2v3l-1.5 1" />
+              <g>
+                <g>
+                  <path d="M272.046,29.15H12.954C5.798,29.15,0,34.945,0,42.101v161.926c0,7.162,5.798,12.951,12.954,12.951h116.592v12.958H61.534
+                    c-7.153,0-12.955,5.808-12.955,12.951c0,7.168,5.802,12.963,12.955,12.963h161.933c7.152,0,12.954-5.795,12.954-12.963
+                    c0-7.144-5.802-12.951-12.954-12.951h-68.013v-12.958h116.592c7.156,0,12.954-5.789,12.954-12.951V42.101
+                    C285,34.945,279.202,29.15,272.046,29.15z M259.092,191.07H25.909V55.052h233.183V191.07z"/>
+                  <path d="M183.942,141.548c0.399,0.167,0.819,0.248,1.237,0.248c0.881,0,1.744-0.359,2.369-1.033l5.13-5.504l8.269,22.705
+                    c0.479,1.323,1.723,2.146,3.043,2.146c0.365,0,0.742-0.067,1.107-0.21c1.683-0.6,2.548-2.468,1.933-4.15l-8.263-22.705
+                    l7.468,0.916c1.345,0.204,2.647-0.52,3.269-1.713c0.625-1.206,0.436-2.666-0.47-3.667l-20.364-22.587
+                    c-0.878-0.977-2.276-1.323-3.513-0.866c-1.24,0.445-2.081,1.608-2.125,2.925l-1.085,30.387
+                    C181.895,139.791,182.692,141.035,183.942,141.548z"/>
+                  <path d="M55.596,123.172l39.923-34.338l39.933,34.338c0.798,0.693,1.788,1.039,2.783,1.039c1.2,0,2.388-0.507,3.232-1.497
+                    c1.537-1.781,1.336-4.484-0.449-6.024L98.305,79.97c-1.602-1.379-3.964-1.379-5.569,0l-42.707,36.72
+                    c-1.791,1.54-1.989,4.243-0.452,6.024C51.112,124.527,53.809,124.719,55.596,123.172z"/>
+                  <path d="M97.384,94.289c-1.07-0.916-2.656-0.916-3.723,0l-32.177,27.77c-0.627,0.538-1.002,1.324-1.002,2.152v40.14
+                    c0,1.571,1.293,2.852,2.848,2.852h64.366c1.577,0,2.852-1.28,2.852-2.852v-40.14c0-0.829-0.362-1.614-0.98-2.152L97.384,94.289z
+                    M92.671,154.61c0,1.571-1.271,2.852-2.845,2.852h-9.96c-1.577,0-2.845-1.28-2.845-2.852v-9.964c0-1.596,1.268-2.864,2.845-2.864
+                    h9.96c1.574,0,2.845,1.268,2.845,2.864V154.61z M92.671,133.254c0,1.565-1.271,2.845-2.845,2.845h-9.96
+                    c-1.577,0-2.845-1.28-2.845-2.845v-9.982c0-1.571,1.268-2.845,2.845-2.845h9.96c1.574,0,2.845,1.274,2.845,2.845V133.254z
+                    M114.031,154.61c0,1.571-1.271,2.852-2.848,2.852h-9.967c-1.562,0-2.848-1.28-2.848-2.852v-9.964
+                    c0-1.596,1.287-2.864,2.848-2.864h9.967c1.577,0,2.848,1.268,2.848,2.864V154.61z M114.031,133.254
+                    c0,1.565-1.271,2.845-2.848,2.845h-9.967c-1.562,0-2.848-1.28-2.848-2.845v-9.982c0-1.571,1.287-2.845,2.848-2.845h9.967
+                    c1.577,0,2.848,1.274,2.848,2.845V133.254z"/>
+                </g>
+              </g>
             </svg>
             <h1 className="ml-2 text-xl font-semibold" style={{color: '#ffffff'}}>LUM</h1>
           </div>
@@ -328,25 +351,34 @@ export default function Dashboard() {
                 // Menu con submenu
                 <>
                   <button
-                    onClick={() => setFornitoriSubmenuOpen(!fornitoriSubmenuOpen)}
+                    onClick={() => {
+                      if (item.key === 'attivitaemanutenzione') {
+                        setAttivitaSubmenuOpen(!attivitaSubmenuOpen);
+                      } else if (item.key === 'fornitori') {
+                        setFornitoriSubmenuOpen(!fornitoriSubmenuOpen);
+                      }
+                    }}
                     className={`w-full flex items-center justify-between px-4 py-2 text-sm font-medium rounded-md transition-colors cursor-pointer ${
-                      (activeTab === 'fornitori' || activeTab === 'settori')
-                        ? 'text-white' 
+                      ((item.key === 'attivitaemanutenzione' && ['todos','manutenzione','acquisti'].includes(activeTab)) ||
+                       (item.key === 'fornitori' && (activeTab === 'fornitori' || activeTab === 'settori')))
+                        ? 'text-white'
                         : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                     }`}
-                    style={(activeTab === 'fornitori' || activeTab === 'settori') ? {backgroundColor: '#8d9c71'} : {}}
+                    style={((item.key === 'attivitaemanutenzione' && ['todos','manutenzione','acquisti'].includes(activeTab)) ||
+                      (item.key === 'fornitori' && (activeTab === 'fornitori' || activeTab === 'settori')))
+                      ? {backgroundColor: '#8d9c71'} : {}}
                   >
-                    <div className="flex items-center">
-                      <item.icon className="mr-3 h-5 w-5" />
-                      {item.name}
+                    <div className="flex flex-row items-center gap-2 whitespace-nowrap">
+                      <item.icon className="h-5 w-5" />
+                      <span>{item.name}</span>
                     </div>
-                    {fornitoriSubmenuOpen ? (
+                    {(item.key === 'attivitaemanutenzione' ? attivitaSubmenuOpen : fornitoriSubmenuOpen) ? (
                       <ChevronDown className="h-4 w-4" />
                     ) : (
                       <ChevronRight className="h-4 w-4" />
                     )}
                   </button>
-                  {fornitoriSubmenuOpen && (
+                  {(item.key === 'attivitaemanutenzione' ? attivitaSubmenuOpen : fornitoriSubmenuOpen) && (
                     <div className="ml-6 mt-1 space-y-1">
                       {item.submenu?.map((subItem) => (
                         <button
@@ -447,8 +479,10 @@ export default function Dashboard() {
             
             <h2 className="text-xl font-semibold capitalize" style={{color: '#ffffff'}}>
               {activeTab === 'overview' && 'Dashboard'}
-              {activeTab === 'todos' && 'Attività e manutenzione'}
-              {activeTab === 'ricariche' && 'Ricariche GAS'}              {activeTab === 'scadenzario' && 'Scadenzario'}              {activeTab === 'documenti' && 'Gestione Documentale'}
+              {['todos','manutenzione','acquisti'].includes(activeTab) && 'Attività e manutenzione'}
+              {activeTab === 'ricariche' && 'Ricariche GAS'}
+              {activeTab === 'scadenzario' && 'Scadenzario'}
+              {activeTab === 'documenti' && 'Gestione Documentale'}
               {activeTab === 'fornitori' && 'Gestione Fornitori'}
               {activeTab === 'settori' && 'Settori Fornitori'}
               {activeTab === 'users' && 'Gestione Utenti'}
@@ -918,6 +952,12 @@ export default function Dashboard() {
           )}
           
           {activeTab === 'todos' && <TodoList />}
+          {activeTab === 'manutenzione' && (
+            <div className="bg-white p-8 rounded shadow text-center text-gray-500">Sezione Manutenzione (in sviluppo)</div>
+          )}
+          {activeTab === 'acquisti' && (
+            <div className="bg-white p-8 rounded shadow text-center text-gray-500">Sezione Acquisti (in sviluppo)</div>
+          )}
           {activeTab === 'ricariche' && <RicaricaManagement />}
           {activeTab === 'scadenzario' && <ScadenzarioManager initialFilter={scadenzarioFilter} onFilterChange={() => setScadenzarioFilter(null)} />}
           {activeTab === 'documenti' && <DocumentManagement />}

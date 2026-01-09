@@ -65,6 +65,7 @@ export interface Scadenza {
   note?: string;
   createdAt: Date;
   userId: string;
+  emails: string[]; // Nuovo campo: array di email associate
 }
 
 export interface Settore {
