@@ -1,3 +1,22 @@
+export interface Acquisto {
+  id: string;
+  descrizioneBreve: string;
+  testo: string;
+  oggettoSpesa: string;
+  fornitoreId: string; // FK Fornitore
+  imponibile: number;
+  aliquotaIVA: number; // percentuale (es. 22)
+  importoTotale: number;
+  numeroDocumento: string;
+  dataDocumento: Date;
+  dataScadenza: Date;
+  statoPagamento: 'Pagato' | 'Da Pagare' | 'In Scadenza' | 'Contestato';
+  metodoPagamento: 'Bonifico' | 'Carta di Credito' | 'RID' | 'Contanti';
+  categoriaSpesaId: string; // FK Settore
+  note?: string;
+  createdAt: Date;
+  userId: string;
+}
 export interface User {
   id: string;
   email: string;

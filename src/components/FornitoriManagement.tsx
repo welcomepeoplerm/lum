@@ -213,11 +213,6 @@ export default function FornitoriManagement() {
     setEditingId(null);
   };
 
-  const getSettoreNome = (settoreId: string) => {
-    const settore = settori.find(s => s.id === settoreId);
-    return settore ? settore.nome : 'N/A';
-  };
-
   const openWhatsApp = (mobile: string, ragioneSociale: string) => {
     if (!mobile) {
       alert('Numero di cellulare non disponibile');
@@ -236,22 +231,6 @@ export default function FornitoriManagement() {
     // Apri in nuova finestra
     window.open(whatsappUrl, '_blank');
   };
-
-  const filteredFornitori = fornitori.filter((fornitore) => {
-    const matchesSearch = 
-      fornitore.ragioneSociale.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      fornitore.referente.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      fornitore.email.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesSettore = !filterSettore || fornitore.settoreId === filterSettore;
-    
-    const matchesAttivo = 
-      filterAttivo === 'all' || 
-      (filterAttivo === 'attivi' && fornitore.attivo) ||
-      (filterAttivo === 'inattivi' && !fornitore.attivo);
-
-    return matchesSearch && matchesSettore && matchesAttivo;
-  });
 
   const exportToExcel = () => {
     if (filteredFornitori.length === 0) {
@@ -499,6 +478,25 @@ export default function FornitoriManagement() {
     }, 250);
   };
 
+  const getSettoreNome = (settoreId: string) => {
+    const settore = settori.find(s => s.id === settoreId);
+    return settore ? settore.nome : 'N/A';
+  };
+
+  // Filtro fornitori per ricerca, settore e stato
+  const filteredFornitori = fornitori.filter((fornitore) => {
+    const matchesSearch =
+      fornitore.ragioneSociale.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      fornitore.referente.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      fornitore.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSettore = !filterSettore || fornitore.settoreId === filterSettore;
+    const matchesAttivo =
+      filterAttivo === 'all' ||
+      (filterAttivo === 'attivi' && fornitore.attivo) ||
+      (filterAttivo === 'inattivi' && !fornitore.attivo);
+    return matchesSearch && matchesSettore && matchesAttivo;
+  });
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -642,6 +640,181 @@ export default function FornitoriManagement() {
       </div>
       )}
 
+      {/* Form Pannello SOPRA la tabella */}
+      {showForm && (
+        <div className="mb-6 p-4 bg-gray-50 rounded-lg border">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">
+            {editingId ? 'Modifica Fornitore' : 'Nuovo Fornitore'}
+          </h3>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Ragione Sociale, Settore, Referente, Email, Telefono, Mobile, Sede Legale, Codice Fiscale, Partita IVA, Note, Attivo */}
+              {/* ...già presenti nel codice... */}
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Ragione Sociale <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.ragioneSociale}
+                  onChange={(e) => setFormData({ ...formData, ragioneSociale: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  required
+                  placeholder="Es. Rossi S.r.l."
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Settore <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={formData.settoreId}
+                  onChange={(e) => setFormData({ ...formData, settoreId: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  required
+                >
+                  <option value="">Seleziona un settore</option>
+                  {settori.map((settore) => (
+                    <option key={settore.id} value={settore.id}>
+                      {settore.nome}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Referente <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.referente}
+                  onChange={(e) => setFormData({ ...formData, referente: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  required
+                  placeholder="Nome del referente"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Email <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  required
+                  placeholder="email@esempio.it"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Telefono
+                </label>
+                <input
+                  type="tel"
+                  value={formData.telefono}
+                  onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  placeholder="Es. 06 12345678"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Mobile
+                </label>
+                <input
+                  type="tel"
+                  value={formData.mobile}
+                  onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  placeholder="Es. 333 1234567"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Sede Legale
+                </label>
+                <input
+                  type="text"
+                  value={formData.sedeLegale}
+                  onChange={(e) => setFormData({ ...formData, sedeLegale: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  placeholder="Via, Città, CAP"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Codice Fiscale
+                </label>
+                <input
+                  type="text"
+                  value={formData.codiceFiscale}
+                  onChange={(e) => setFormData({ ...formData, codiceFiscale: e.target.value.toUpperCase() })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  placeholder="RSSMRA80A01H501X"
+                  maxLength={16}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Partita IVA
+                </label>
+                <input
+                  type="text"
+                  value={formData.partitaIva}
+                  onChange={(e) => setFormData({ ...formData, partitaIva: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  placeholder="12345678901"
+                  maxLength={11}
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Note
+                </label>
+                <textarea
+                  value={formData.note}
+                  onChange={(e) => setFormData({ ...formData, note: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  rows={3}
+                  placeholder="Note aggiuntive..."
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.attivo}
+                    onChange={(e) => setFormData({ ...formData, attivo: e.target.checked })}
+                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                  />
+                  <span className="text-sm font-medium text-gray-700">Fornitore attivo</span>
+                </label>
+              </div>
+            </div>
+            <div className="flex gap-2 pt-2 justify-end">
+              <button
+                type="button"
+                onClick={resetForm}
+                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+              >
+                <X className="h-4 w-4 mr-1 inline" />
+                Annulla
+              </button>
+              <button
+                type="submit"
+                className="inline-flex items-center px-4 py-2 text-white rounded-md hover:opacity-90"
+                style={{backgroundColor: '#8d9c71'}}
+              >
+                <Save className="h-4 w-4 mr-2" />
+                {editingId ? 'Modifica' : 'Salva'}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
       {/* Tabella Fornitori */}
       <div className="bg-white shadow-sm rounded-lg overflow-hidden">
         <div className="overflow-x-auto">
@@ -761,211 +934,6 @@ export default function FornitoriManagement() {
           </table>
         </div>
       </div>
-
-      {/* Form Modale */}
-      {showForm && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-10 mx-auto p-6 border w-full max-w-2xl shadow-lg rounded-md bg-white my-8">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-medium">
-                {editingId ? 'Modifica Fornitore' : 'Nuovo Fornitore'}
-              </h3>
-              <button
-                onClick={resetForm}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <X className="h-6 w-6" />
-              </button>
-            </div>
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Ragione Sociale */}
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Ragione Sociale <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.ragioneSociale}
-                    onChange={(e) => setFormData({ ...formData, ragioneSociale: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                    required
-                    placeholder="Es. Rossi S.r.l."
-                  />
-                </div>
-
-                {/* Settore */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Settore <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    value={formData.settoreId}
-                    onChange={(e) => setFormData({ ...formData, settoreId: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                    required
-                  >
-                    <option value="">Seleziona un settore</option>
-                    {settori.map((settore) => (
-                      <option key={settore.id} value={settore.id}>
-                        {settore.nome}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Referente */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Referente <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.referente}
-                    onChange={(e) => setFormData({ ...formData, referente: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                    required
-                    placeholder="Nome del referente"
-                  />
-                </div>
-
-                {/* Email */}
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Email <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                    required
-                    placeholder="email@esempio.it"
-                  />
-                </div>
-
-                {/* Telefono */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Telefono
-                  </label>
-                  <input
-                    type="tel"
-                    value={formData.telefono}
-                    onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                    placeholder="Es. 06 12345678"
-                  />
-                </div>
-
-                {/* Mobile */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Mobile
-                  </label>
-                  <input
-                    type="tel"
-                    value={formData.mobile}
-                    onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                    placeholder="Es. 333 1234567"
-                  />
-                </div>
-
-                {/* Sede Legale */}
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Sede Legale
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.sedeLegale}
-                    onChange={(e) => setFormData({ ...formData, sedeLegale: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                    placeholder="Via, Città, CAP"
-                  />
-                </div>
-
-                {/* Codice Fiscale */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Codice Fiscale
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.codiceFiscale}
-                    onChange={(e) => setFormData({ ...formData, codiceFiscale: e.target.value.toUpperCase() })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                    placeholder="RSSMRA80A01H501X"
-                    maxLength={16}
-                  />
-                </div>
-
-                {/* Partita IVA */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Partita IVA
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.partitaIva}
-                    onChange={(e) => setFormData({ ...formData, partitaIva: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                    placeholder="12345678901"
-                    maxLength={11}
-                  />
-                </div>
-
-                {/* Note */}
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Note
-                  </label>
-                  <textarea
-                    value={formData.note}
-                    onChange={(e) => setFormData({ ...formData, note: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                    rows={3}
-                    placeholder="Note aggiuntive..."
-                  />
-                </div>
-
-                {/* Attivo */}
-                <div className="md:col-span-2">
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      checked={formData.attivo}
-                      onChange={(e) => setFormData({ ...formData, attivo: e.target.checked })}
-                      className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                    />
-                    <span className="text-sm font-medium text-gray-700">Fornitore attivo</span>
-                  </label>
-                </div>
-              </div>
-
-              <div className="flex justify-end space-x-3 pt-4 border-t">
-                <button
-                  type="button"
-                  onClick={resetForm}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-                >
-                  Annulla
-                </button>
-                <button
-                  type="submit"
-                  className="inline-flex items-center px-4 py-2 text-white rounded-md hover:opacity-90"
-                  style={{backgroundColor: '#8d9c71'}}
-                >
-                  <Save className="h-4 w-4 mr-2" />
-                  {editingId ? 'Modifica' : 'Salva'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

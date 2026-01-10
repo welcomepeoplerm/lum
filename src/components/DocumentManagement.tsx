@@ -360,72 +360,84 @@ const DocumentManagement: React.FC<DocumentManagementProps> = ({ onClose }) => {
           </div>
 
           {/* Actions Bar */}
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="flex-1 max-w-md">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <div className="flex flex-col gap-4">
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-3 sm:justify-end">
+              <label className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 cursor-pointer flex items-center justify-center gap-2 text-center">
+                <Upload className="w-4 h-4" />
+                {uploading ? 'Caricando...' : 'Carica File'}
                 <input
-                  type="text"
-                  placeholder={isGlobalSearch ? "Cerca in tutto Google Drive..." : "Cerca nella cartella corrente..."}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  type="file"
+                  onChange={handleFileUpload}
+                  disabled={uploading}
+                  className="hidden"
+                  multiple={false}
                 />
-              </div>
+              </label>
+
+              <button
+                onClick={() => setShowCreateFolder(true)}
+                className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 flex items-center justify-center gap-2"
+              >
+                <FolderPlus className="w-4 h-4" />
+                Nuova Cartella
+              </button>
+
+              <button
+                onClick={() => loadFiles()}
+                disabled={loading}
+                className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                Aggiorna
+              </button>
             </div>
 
-            {/* Toggle per ricerca globale */}
-            <div className="flex items-center gap-2">
-              <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+            {/* Search Bar */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex-1">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <input
+                    type="text"
+                    placeholder={isGlobalSearch ? "Cerca in tutto Google Drive..." : "Cerca nella cartella corrente..."}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+
+              {/* Toggle per ricerca globale */}
+              <button
+                onClick={() => setIsGlobalSearch(!isGlobalSearch)}
+                className={`flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-md border transition-colors ${
+                  isGlobalSearch
+                    ? 'bg-blue-50 border-blue-300 text-blue-700'
+                    : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                }`}
+              >
                 <input
                   type="checkbox"
                   checked={isGlobalSearch}
-                  onChange={(e) => setIsGlobalSearch(e.target.checked)}
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  onChange={() => {}}
+                  className="w-4 h-4 rounded border-gray-300 text-blue-600 pointer-events-none"
+                  readOnly
                 />
-                <Globe className={`w-4 h-4 ${isGlobalSearch ? 'text-blue-600' : 'text-gray-400'}`} />
-                Ricerca globale
-              </label>
+                <Globe className={`w-4 h-4 ${isGlobalSearch ? 'text-blue-600' : 'text-gray-500'}`} />
+                <span>Ricerca globale</span>
+              </button>
+
+              <button
+                onClick={handleSearch}
+                disabled={loading}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                <Search className="w-4 h-4" />
+                Cerca
+              </button>
             </div>
-
-            <button
-              onClick={handleSearch}
-              disabled={loading}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
-            >
-              <Search className="w-4 h-4" />
-              Cerca
-            </button>
-
-            <label className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 cursor-pointer flex items-center gap-2">
-              <Upload className="w-4 h-4" />
-              {uploading ? 'Caricando...' : 'Carica File'}
-              <input
-                type="file"
-                onChange={handleFileUpload}
-                disabled={uploading}
-                className="hidden"
-                multiple={false}
-              />
-            </label>
-
-            <button
-              onClick={() => setShowCreateFolder(true)}
-              className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 flex items-center gap-2"
-            >
-              <FolderPlus className="w-4 h-4" />
-              Nuova Cartella
-            </button>
-
-            <button
-              onClick={() => loadFiles()}
-              disabled={loading}
-              className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 disabled:opacity-50 flex items-center gap-2"
-            >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-              Aggiorna
-            </button>
           </div>
         </div>
 

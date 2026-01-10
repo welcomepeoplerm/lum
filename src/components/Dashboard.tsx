@@ -12,6 +12,7 @@ import ScadenzarioManager from '@/components/ScadenzarioManager';
 import SettoriManagement from '@/components/SettoriManagement';
 import FornitoriManagement from '@/components/FornitoriManagement';
 import DocumentManagement from '@/components/DocumentManagement';
+import AcquistiManagement from '@/components/AcquistiManagement';
 import ChangePassword from '@/components/ChangePassword';
 import SessionTimeoutWarning from '@/components/SessionTimeoutWarning';
 import { 
@@ -28,7 +29,9 @@ import {
   Building,
   ChevronDown,
   ChevronRight,
-  FileText
+  FileText,
+  Euro,
+  Truck
 } from 'lucide-react';
 
 export default function Dashboard() {
@@ -43,6 +46,8 @@ export default function Dashboard() {
   const [usersLoading, setUsersLoading] = useState(true);
   const [fornitori, setFornitori] = useState<any[]>([]);
   const [fornitoriLoading, setFornitoriLoading] = useState(true);
+  const [acquisti, setAcquisti] = useState<any[]>([]);
+  const [acquistiLoading, setAcquistiLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [scadenzarioFilter, setScadenzarioFilter] = useState<string | null>(null);
   const [showChangePassword, setShowChangePassword] = useState(false);
@@ -197,6 +202,31 @@ export default function Dashboard() {
     }
   };
 
+  // Carica gli acquisti per il conteggio nella dashboard
+  const loadAcquisti = async () => {
+    try {
+      setAcquistiLoading(true);
+      const querySnapshot = await getDocs(collection(db, 'acquisti'));
+      const acquistiData: any[] = [];
+      
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        acquistiData.push({
+          id: doc.id,
+          importoTotale: data.importoTotale || 0,
+          createdAt: data.createdAt ? data.createdAt.toDate() : new Date(),
+          ...data
+        });
+      });
+      
+      setAcquisti(acquistiData);
+    } catch (error) {
+      console.error('Errore nel caricamento degli acquisti:', error);
+    } finally {
+      setAcquistiLoading(false);
+    }
+  };
+
   // Funzioni helper per le scadenze
   const isScadenzaImminente = (dataScadenza: Date) => {
     const oggi = new Date();
@@ -221,6 +251,7 @@ export default function Dashboard() {
     loadScadenze();
     loadUsers();
     loadFornitori();
+    loadAcquisti();
   }, []);
 
   const handleLogout = async () => {
@@ -271,7 +302,7 @@ export default function Dashboard() {
     { 
       name: 'Fornitori', 
       key: 'fornitori' as const, 
-      icon: Building,
+      icon: Truck,
       adminOnly: true,
       hasSubmenu: true,
       submenu: [
@@ -545,7 +576,7 @@ export default function Dashboard() {
                                   >
                                     <div className="text-sm font-medium" style={{color: '#ea580c'}}>Imminenti</div>
                                     <div className="text-2xl font-bold" style={{color: '#ea580c'}}>
-                                      {scadenze.filter(s => !s.completata && isScadenzaImminente(s.dataScadenza)).length}
+                                      {scadenze.filter(s => !s.completata && isScadenzaImminente(s.dataScadenza) && !isScadenzaScaduta(s.dataScadenza)).length}
                                     </div>
                                   </button>
                                 </div>
@@ -561,7 +592,7 @@ export default function Dashboard() {
                         <div className="flex items-center">
                           <List className="h-8 w-8" style={{color: '#8d9c71'}} />
                           <div className="ml-3">
-                            <h4 className="text-lg font-medium" style={{color: '#46433c'}}>Attività e manutenzione</h4>
+                          <h4 className="text-lg font-medium" style={{color: '#46433c'}}>Attività interne</h4>
                             <p className="text-sm" style={{color: '#8d9c71'}}>Gestisci le attività del casale</p>
                           </div>
                         </div>
@@ -637,7 +668,7 @@ export default function Dashboard() {
                     <div className="p-4 rounded-lg" style={{backgroundColor: '#e8f5e9'}}>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center">
-                          <Building className="h-8 w-8" style={{color: '#2e7d32'}} />
+                          <Truck className="h-8 w-8" style={{color: '#2e7d32'}} />
                           <div className="ml-3">
                             <h4 className="text-lg font-medium" style={{color: '#1b5e20'}}>Gestione Fornitori</h4>
                             <p className="text-sm" style={{color: '#388e3c'}}>Visualizza i fornitori del sistema</p>
@@ -659,6 +690,32 @@ export default function Dashboard() {
                         </div>
                       </div>
                     </div>
+
+                    <div className="p-4 rounded-lg" style={{backgroundColor: '#f3e5f5'}}>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center">
+                          <Euro className="h-8 w-8" style={{color: '#8d9c71'}} />
+                          <div className="ml-3">
+                            <h4 className="text-lg font-medium" style={{color: '#46433c'}}>Gestione Acquisti</h4>
+                            <p className="text-sm" style={{color: '#8d9c71'}}>Visualizza gli acquisti del sistema</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          {acquistiLoading ? (
+                            <div className="text-sm text-gray-500">Caricamento...</div>
+                          ) : (
+                            <div className="space-y-1">
+                              <div className="text-sm" style={{color: '#46433c'}}>
+                                <span className="font-medium">Totale:</span> {acquisti.length}
+                              </div>
+                              <div className="text-sm" style={{color: '#46433c'}}>
+                                <span className="font-medium">Spesi:</span> €{acquisti.reduce((sum, a) => sum + (parseFloat(a.importoTotale) || 0), 0).toFixed(2)}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                   
                   {/* Card grafico Attività e manutenzione */}
@@ -667,7 +724,7 @@ export default function Dashboard() {
                       <div className="flex items-center justify-between mb-6">
                         <div className="flex items-center">
                           <List className="h-6 w-6" style={{color: '#8d9c71'}} />
-                          <h3 className="ml-2 text-lg leading-6 font-medium text-gray-900">Statistiche Attività e manutenzione</h3>
+                          <h3 className="ml-2 text-lg leading-6 font-medium text-gray-900">Statistiche Attività interne</h3>
                         </div>
                         <div className="text-sm text-gray-500">
                           Totale: {todos.length} attività
@@ -955,9 +1012,7 @@ export default function Dashboard() {
           {activeTab === 'manutenzione' && (
             <div className="bg-white p-8 rounded shadow text-center text-gray-500">Sezione Manutenzione (in sviluppo)</div>
           )}
-          {activeTab === 'acquisti' && (
-            <div className="bg-white p-8 rounded shadow text-center text-gray-500">Sezione Acquisti (in sviluppo)</div>
-          )}
+          {activeTab === 'acquisti' && <AcquistiManagement />}
           {activeTab === 'ricariche' && <RicaricaManagement />}
           {activeTab === 'scadenzario' && <ScadenzarioManager initialFilter={scadenzarioFilter} onFilterChange={() => setScadenzarioFilter(null)} />}
           {activeTab === 'documenti' && <DocumentManagement />}

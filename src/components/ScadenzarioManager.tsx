@@ -273,13 +273,13 @@ const ScadenzarioManager = ({ initialFilter = null, onFilterChange }: Scadenzari
     const filtroStatoOk = filtroStato === 'tutte' || 
       (filtroStato === 'completate' && scadenza.completata) ||
       (filtroStato === 'pending' && !scadenza.completata) ||
-      (filtroStato === 'imminenti' && !scadenza.completata && isScadenzaImminente(scadenza.dataScadenza)) ||
+      (filtroStato === 'imminenti' && !scadenza.completata && isScadenzaImminente(scadenza.dataScadenza) && !isScadenzaScaduta(scadenza.dataScadenza)) ||
       (filtroStato === 'scadute' && !scadenza.completata && isScadenzaScaduta(scadenza.dataScadenza));
     
     return filtroCategOk && filtroStatoOk;
   });
 
-  const scadenzeImminenti = scadenze.filter(s => !s.completata && isScadenzaImminente(s.dataScadenza));
+  const scadenzeImminenti = scadenze.filter(s => !s.completata && isScadenzaImminente(s.dataScadenza) && !isScadenzaScaduta(s.dataScadenza));
   const scadenzeScadute = scadenze.filter(s => !s.completata && isScadenzaScaduta(s.dataScadenza));
 
   // Funzioni per il calendario
