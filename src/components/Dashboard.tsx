@@ -32,7 +32,7 @@ import {
 } from 'lucide-react';
 
 export default function Dashboard() {
-  const [activeTab, setActiveTab] = useState<'overview' | 'todos' | 'users' | 'ricariche' | 'scadenzario' | 'fornitori' | 'settori' | 'documenti'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'todos' | 'users' | 'ricariche' | 'scadenzario' | 'fornitori' | 'settori' | 'documenti' | 'manutenzione' | 'acquisti'>('overview');
   const [todos, setTodos] = useState<Todo[]>([]);
   const [todosLoading, setTodosLoading] = useState(true);
   const [ricariche, setRicariche] = useState<any[]>([]);
@@ -399,11 +399,11 @@ export default function Dashboard() {
                     </div>
                   )}
                 </>
-              ) : (
-                // Menu normale
+              ) : null}
+              {!item.hasSubmenu && item.key !== 'attivitaemanutenzione' && (
                 <button
                   onClick={() => {
-                    setActiveTab(item.key);
+                    setActiveTab(item.key as typeof activeTab);
                     setSidebarOpen(false);
                   }}
                   className={`w-full flex items-center px-4 py-2 text-sm font-medium rounded-md transition-colors cursor-pointer ${
