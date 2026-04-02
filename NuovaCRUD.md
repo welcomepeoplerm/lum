@@ -291,7 +291,7 @@ const resetForm = () => {
         </label>
         <select
           value={filter1}
-          onChange={(e) => setFilter1(e.target.value)}
+          onChange={(e) => sketFilter1(e.target.value)}
           className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
         >
           <option value="">Tutti</option>

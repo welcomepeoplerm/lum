@@ -1,6 +1,6 @@
 {
   "name": "lyfe-casale",
-  "version": "1.8",
+  "version": "2.2",
   "private": true,
   "scripts": {
     "dev": "next dev -p 3001",
@@ -16,6 +16,8 @@
     "diagnose:google": "node diagnose-google-drive.js"
   },
   "dependencies": {
+    "@fluentui/react-components": "^9.73.2",
+    "@fluentui/react-icons": "^2.0.320",
     "@sendgrid/mail": "^8.1.6",
     "@types/bcryptjs": "^2.4.6",
     "@types/jsonwebtoken": "^9.0.10",

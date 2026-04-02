@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useContext, createContext } from 'react';
+import { useState, useEffect, useContext, createContext, useRef, useCallback } from 'react';
 import { 
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword,
@@ -33,8 +33,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Gestione timeout sessione - 10 minuti di inattività
   const INACTIVITY_TIMEOUT = 10 * 60 * 1000; // 10 minuti in millisecondi
   const WARNING_TIME = 2 * 60 * 1000; // Warning 2 minuti prima
-  const [inactivityTimer, setInactivityTimer] = useState<NodeJS.Timeout | null>(null);
-  const [warningTimer, setWarningTimer] = useState<NodeJS.Timeout | null>(null);
+  // IMPORTANT: use refs to avoid re-rendering the whole app on every user interaction
+  // (on iOS this can break input focus and make taps feel unreliable)
+  const inactivityTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const warningTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [showSessionWarning, setShowSessionWarning] = useState(false);
   const [sessionWarningTimeLeft, setSessionWarningTimeLeft] = useState(0);
 
@@ -50,34 +52,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const clearSessionTimers = useCallback(() => {
+    if (inactivityTimerRef.current) {
+      clearTimeout(inactivityTimerRef.current);
+      inactivityTimerRef.current = null;
+    }
+    if (warningTimerRef.current) {
+      clearTimeout(warningTimerRef.current);
+      warningTimerRef.current = null;
+    }
+  }, []);
+
   // Funzione per resettare il timer di inattività
-  const resetInactivityTimer = () => {
-    // Pulisce i timer esistenti
-    if (inactivityTimer) {
-      clearTimeout(inactivityTimer);
-    }
-    if (warningTimer) {
-      clearTimeout(warningTimer);
-    }
-    
-    // Nasconde il warning se era attivo
+  const resetInactivityTimer = useCallback(() => {
+    clearSessionTimers();
+
+    // Nasconde il warning se era attivo (se già false, React evita rerender)
     setShowSessionWarning(false);
 
     // Timer per il warning (8 minuti - 2 minuti prima della scadenza)
-    const newWarningTimer = setTimeout(() => {
+    warningTimerRef.current = setTimeout(() => {
       setShowSessionWarning(true);
       setSessionWarningTimeLeft(120); // 2 minuti in secondi
     }, INACTIVITY_TIMEOUT - WARNING_TIME);
 
     // Timer per la scadenza effettiva (10 minuti)
-    const newTimer = setTimeout(() => {
+    inactivityTimerRef.current = setTimeout(() => {
       console.log('🕒 Sessione scaduta per inattività (10 minuti)');
       handleSessionExpiry();
     }, INACTIVITY_TIMEOUT);
-
-    setWarningTimer(newWarningTimer);
-    setInactivityTimer(newTimer);
-  };
+  }, [INACTIVITY_TIMEOUT, WARNING_TIME, clearSessionTimers]);
 
   // Estende la sessione quando l'utente sceglie di continuare
   const extendSession = () => {
@@ -146,21 +150,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log('🚪 User logged out');
         setUser(null);
         // Pulisce i timer quando l'utente si disconnette
-        if (inactivityTimer) {
-          clearTimeout(inactivityTimer);
-          setInactivityTimer(null);
-        }
-        if (warningTimer) {
-          clearTimeout(warningTimer);
-          setWarningTimer(null);
-        }
+        clearSessionTimers();
         setShowSessionWarning(false);
       }
       setLoading(false);
     });
 
     return unsubscribe;
-  }, []);
+  }, [clearSessionTimers, resetInactivityTimer]);
 
   // Effetto per gestire gli eventi di attività dell'utente
   useEffect(() => {
@@ -188,14 +185,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Cleanup dei timer quando il componente viene smontato
   useEffect(() => {
     return () => {
-      if (inactivityTimer) {
-        clearTimeout(inactivityTimer);
-      }
-      if (warningTimer) {
-        clearTimeout(warningTimer);
-      }
+      clearSessionTimers();
     };
-  }, []);
+  }, [clearSessionTimers]);
 
   const login = async (credentials: LoginCredentials) => {
     await signInWithEmailAndPassword(auth, credentials.email, credentials.password);
@@ -214,14 +206,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     // Pulisce i timer prima del logout
-    if (inactivityTimer) {
-      clearTimeout(inactivityTimer);
-      setInactivityTimer(null);
-    }
-    if (warningTimer) {
-      clearTimeout(warningTimer);
-      setWarningTimer(null);
-    }
+    clearSessionTimers();
     setShowSessionWarning(false);
     await signOut(auth);
   };

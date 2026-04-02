@@ -6,6 +6,7 @@ import { db } from '@/lib/firebase';
 import { useAuth } from '@/hooks/useAuth';
 import { Settore } from '@/types';
 import { Plus, Edit2, Trash2, Save, X, Download, Printer, Building } from 'lucide-react';
+import { Spinner } from '@fluentui/react-components';
 import * as XLSX from 'xlsx';
 
 const SETTORI_PREDEFINITI = [
@@ -194,11 +195,11 @@ export default function SettoriManagement() {
             .header {
               text-align: center;
               margin-bottom: 30px;
-              border-bottom: 2px solid #8d9c71;
+              border-bottom: 2px solid #2f5fdd;
               padding-bottom: 10px;
             }
             .header h1 {
-              color: #8d9c71;
+              color: #2f5fdd;
               margin: 0;
               font-size: 24px;
             }
@@ -217,7 +218,7 @@ export default function SettoriManagement() {
               text-align: left; 
             }
             th { 
-              background-color: #8d9c71; 
+              background-color: #2f5fdd; 
               color: white;
               font-weight: bold;
             }
@@ -234,7 +235,7 @@ export default function SettoriManagement() {
               border: 1px solid #dee2e6;
             }
             .stats h3 {
-              color: #8d9c71;
+              color: #2f5fdd;
               margin-top: 0;
             }
             .stats-grid {
@@ -247,12 +248,12 @@ export default function SettoriManagement() {
               background: white;
               padding: 10px 15px;
               border-radius: 5px;
-              border-left: 4px solid #8d9c71;
+              border-left: 4px solid #2f5fdd;
             }
             .stat-value {
               font-size: 18px;
               font-weight: bold;
-              color: #8d9c71;
+              color: #2f5fdd;
             }
             .stat-label {
               font-size: 14px;
@@ -320,21 +321,21 @@ export default function SettoriManagement() {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="text-lg">Caricamento settori...</div>
+        <Spinner label="Caricamento settori..." size="large" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="bg-white shadow rounded-lg p-6 space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Gestione Settori</h1>
-          <p className="text-gray-600">Gestisci i settori dei fornitori</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="flex items-center">
+          <Building className="h-6 w-6 mr-2" style={{color: '#2f5fdd'}} />
+          <h2 className="text-xl font-semibold text-gray-800">Gestione Settori</h2>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
           {settori.length === 0 && (
             <button
               onClick={seedSettori}
@@ -365,13 +366,15 @@ export default function SettoriManagement() {
           <button
             onClick={() => setShowForm(true)}
             className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white rounded-md shadow-sm hover:opacity-90 transition-opacity cursor-pointer w-full sm:w-auto"
-            style={{backgroundColor: '#8d9c71'}}
+            style={{backgroundColor: '#2f5fdd'}}
           >
             <Plus className="h-4 w-4 mr-2" />
             Nuovo Settore
           </button>
         </div>
       </div>
+
+      <hr style={{ border: 'none', borderTop: '1px solid #e5e7eb', margin: '0' }} />
 
       {/* Tabella Settori */}
       <div className="bg-white shadow-sm rounded-lg overflow-hidden">
@@ -418,7 +421,7 @@ export default function SettoriManagement() {
                       <div className="flex justify-end space-x-2">
                         <button
                           onClick={() => handleEdit(settore)}
-                          className="inline-flex items-center p-2 text-indigo-600 hover:text-indigo-900 cursor-pointer"
+                          className="inline-flex items-center p-2 text-blue-600 hover:text-blue-800 cursor-pointer"
                         >
                           <Edit2 className="h-4 w-4" />
                         </button>
@@ -463,7 +466,7 @@ export default function SettoriManagement() {
                   type="text"
                   value={formData.nome}
                   onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                   required
                   placeholder="Es. Elettricità"
                 />
@@ -480,7 +483,7 @@ export default function SettoriManagement() {
                 <button
                   type="submit"
                   className="inline-flex items-center px-4 py-2 text-white rounded-md hover:opacity-90 cursor-pointer"
-                  style={{backgroundColor: '#8d9c71'}}
+                  style={{backgroundColor: '#2f5fdd'}}
                 >
                   <Save className="h-4 w-4 mr-2" />
                   {editingId ? 'Modifica' : 'Salva'}

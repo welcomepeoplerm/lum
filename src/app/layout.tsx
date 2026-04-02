@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from '@/hooks/useAuth';
@@ -16,6 +16,19 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "LyfeUmbria Manager - Sistema di Gestione Turistico",
   description: "Sistema di gestione per casale turistico con autenticazione, gestione utenti e attività e manutenzione",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'LyfeUmbria Manager'
+  }
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: 'cover'
 };
 
 export default function RootLayout({

@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/hooks/useAuth';
 import { Todo, Unita } from '@/types';
 import { Plus, Trash2, Check, X, Calendar, List, Edit, Filter, Search, ArrowUpDown, ChevronDown, ChevronUp, Download, Printer } from 'lucide-react';
 import { useForm } from 'react-hook-form';
+import { Spinner } from '@fluentui/react-components';
 import * as XLSX from 'xlsx';
 
 interface TodoFormData {
@@ -58,54 +59,56 @@ export default function TodoList() {
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<TodoFormData>();
 
-  // Funzioni per filtri e ordinamento
-  const filteredAndSortedTodos = todos
-    .filter(todo => {
-      // Filtro testo (lavoro da eseguire)
-      if (searchText && !todo.lavorodaeseguire.toLowerCase().includes(searchText.toLowerCase())) {
-        return false;
-      }
-      // Filtro stato eseguito
-      if (filterEseguito === 'si' && !todo.Eseguito) return false;
-      if (filterEseguito === 'no' && todo.Eseguito) return false;
-      // Filtro unità
-      if (filterUnita && todo.unita !== filterUnita) return false;
-      return true;
-    })
-    .sort((a, b) => {
-      let aValue: any, bValue: any;
-      
-      switch (sortField) {
-        case 'lavorodaeseguire':
-          aValue = a.lavorodaeseguire.toLowerCase();
-          bValue = b.lavorodaeseguire.toLowerCase();
-          break;
-        case 'datainserimento':
-          aValue = a.datainserimento.getTime();
-          bValue = b.datainserimento.getTime();
-          break;
-        case 'dataesecuzione':
-          aValue = a.dataesecuzione ? a.dataesecuzione.getTime() : 0;
-          bValue = b.dataesecuzione ? b.dataesecuzione.getTime() : 0;
-          break;
-        case 'Eseguito':
-          aValue = a.Eseguito ? 1 : 0;
-          bValue = b.Eseguito ? 1 : 0;
-          break;
-        case 'unita':
-          const unitaA = unita.find(u => u.id === a.unita);
-          const unitaB = unita.find(u => u.id === b.unita);
-          aValue = unitaA ? unitaA['nomeunità'].toLowerCase() : '';
-          bValue = unitaB ? unitaB['nomeunità'].toLowerCase() : '';
-          break;
-        default:
-          return 0;
-      }
-      
-      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
-      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
-      return 0;
-    });
+  // Funzioni per filtri e ordinamento con useMemo per evitare ricalcoli inutili
+  const filteredAndSortedTodos = useMemo(() => {
+    return todos
+      .filter(todo => {
+        // Filtro testo (lavoro da eseguire)
+        if (searchText && !todo.lavorodaeseguire.toLowerCase().includes(searchText.toLowerCase())) {
+          return false;
+        }
+        // Filtro stato eseguito
+        if (filterEseguito === 'si' && !todo.Eseguito) return false;
+        if (filterEseguito === 'no' && todo.Eseguito) return false;
+        // Filtro unità
+        if (filterUnita && todo.unita !== filterUnita) return false;
+        return true;
+      })
+      .sort((a, b) => {
+        let aValue: any, bValue: any;
+        
+        switch (sortField) {
+          case 'lavorodaeseguire':
+            aValue = a.lavorodaeseguire.toLowerCase();
+            bValue = b.lavorodaeseguire.toLowerCase();
+            break;
+          case 'datainserimento':
+            aValue = a.datainserimento.getTime();
+            bValue = b.datainserimento.getTime();
+            break;
+          case 'dataesecuzione':
+            aValue = a.dataesecuzione ? a.dataesecuzione.getTime() : 0;
+            bValue = b.dataesecuzione ? b.dataesecuzione.getTime() : 0;
+            break;
+          case 'Eseguito':
+            aValue = a.Eseguito ? 1 : 0;
+            bValue = b.Eseguito ? 1 : 0;
+            break;
+          case 'unita':
+            const unitaA = unita.find(u => u.id === a.unita);
+            const unitaB = unita.find(u => u.id === b.unita);
+            aValue = unitaA ? unitaA['nomeunità'].toLowerCase() : '';
+            bValue = unitaB ? unitaB['nomeunità'].toLowerCase() : '';
+            break;
+          default:
+            return 0;
+        }
+        
+        if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
+        if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+        return 0;
+      });
+  }, [todos, searchText, filterEseguito, filterUnita, sortField, sortDirection, unita]);
 
   // Calcoli per la paginazione sui dati filtrati
   const totalPages = Math.ceil(filteredAndSortedTodos.length / itemsPerPage);
@@ -359,8 +362,8 @@ export default function TodoList() {
         <div className="flex items-center space-x-1">
           <span>{children}</span>
           <div className="flex flex-col">
-            <ChevronUp className={`h-3 w-3 ${isActive && sortDirection === 'asc' ? '' : 'text-gray-300'}`} style={isActive && sortDirection === 'asc' ? {color: '#8d9c71'} : {}} />
-            <ChevronDown className={`h-3 w-3 -mt-1 ${isActive && sortDirection === 'desc' ? '' : 'text-gray-300'}`} style={isActive && sortDirection === 'desc' ? {color: '#8d9c71'} : {}} />
+            <ChevronUp className={`h-3 w-3 ${isActive && sortDirection === 'asc' ? '' : 'text-gray-300'}`} style={isActive && sortDirection === 'asc' ? {color: '#2f5fdd'} : {}} />
+            <ChevronDown className={`h-3 w-3 -mt-1 ${isActive && sortDirection === 'desc' ? '' : 'text-gray-300'}`} style={isActive && sortDirection === 'desc' ? {color: '#2f5fdd'} : {}} />
           </div>
         </div>
       </th>
@@ -387,7 +390,7 @@ export default function TodoList() {
     if (currentPage > totalPages && totalPages > 0) {
       setCurrentPage(1);
     }
-  }, [filteredAndSortedTodos.length, totalPages, currentPage]);
+  }, [filteredAndSortedTodos.length, totalPages]);
 
   const loadUnita = async () => {
     try {
@@ -575,7 +578,7 @@ export default function TodoList() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2" style={{borderColor: '#8d9c71'}}></div>
+        <Spinner label="Caricamento attività..." size="large" />
       </div>
     );
   }
@@ -584,7 +587,7 @@ export default function TodoList() {
     <div className="bg-white shadow rounded-lg p-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
         <div className="flex items-center">
-          <List className="h-6 w-6 mr-2" style={{color: '#8d9c71'}} />
+          <List className="h-6 w-6 mr-2" style={{color: '#2f5fdd'}} />
           <h2 className="text-xl font-semibold text-gray-900">Attività e manutenzione</h2>
         </div>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
@@ -598,12 +601,12 @@ export default function TodoList() {
                 reset();
               }
             }}
-            className={`flex items-center justify-center px-3 py-2 rounded-md transition-colors ${
+            className={`flex items-center justify-center px-3 py-2 rounded-md transition-colors cursor-pointer ${
               showFilters
                 ? 'text-white'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
-            style={showFilters ? {backgroundColor: '#8d9c71'} : {}}
+            style={showFilters ? {backgroundColor: '#2f5fdd'} : {}}
             title="Filtri e ordinamento"
           >
             <Filter className="h-4 w-4 mr-1" />
@@ -625,7 +628,7 @@ export default function TodoList() {
           </button>
           <button
             onClick={exportToExcel}
-            className="flex items-center justify-center px-3 py-2 bg-green-100 text-green-700 rounded-md hover:bg-green-200 transition-colors"
+            className="flex items-center justify-center px-3 py-2 bg-green-100 text-green-700 rounded-md hover:bg-green-200 transition-colors cursor-pointer"
             title="Esporta in Excel"
           >
             <Download className="h-4 w-4 mr-1" />
@@ -633,7 +636,7 @@ export default function TodoList() {
           </button>
           <button
             onClick={printTable}
-            className="flex items-center justify-center px-3 py-2 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors"
+            className="flex items-center justify-center px-3 py-2 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors cursor-pointer"
             title="Stampa tabella"
           >
             <Printer className="h-4 w-4 mr-1" />
@@ -642,9 +645,9 @@ export default function TodoList() {
           <button
             onClick={() => setShowAddForm(!showAddForm)}
             className="flex items-center justify-center px-4 py-2 text-white rounded-md transition-colors cursor-pointer w-full sm:w-auto"
-            style={{backgroundColor: '#8d9c71'}}
-            onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#7a8a60'}
-            onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#8d9c71'}
+            style={{backgroundColor: '#2f5fdd'}}
+            onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#244fbf'}
+            onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#2f5fdd'}
           >
             <Plus className="h-4 w-4 mr-2" />
             Nuova Attività
@@ -668,7 +671,7 @@ export default function TodoList() {
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
                 placeholder="Cerca nel lavoro da eseguire..."
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
             
@@ -680,7 +683,7 @@ export default function TodoList() {
               <select
                 value={filterEseguito}
                 onChange={(e) => setFilterEseguito(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="">Tutti</option>
                 <option value="no">Da eseguire</option>
@@ -696,7 +699,7 @@ export default function TodoList() {
               <select
                 value={filterUnita}
                 onChange={(e) => setFilterUnita(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="">Tutte le unità</option>
                 {unita.map((unitaItem) => (
@@ -718,7 +721,7 @@ export default function TodoList() {
               </label>
               <button
                 onClick={clearFilters}
-                className="w-full px-3 py-2 text-sm bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                className="w-full px-3 py-2 text-sm bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 cursor-pointer"
               >
                 <X className="inline h-4 w-4 mr-1" />
                 Reset Filtri
@@ -732,7 +735,7 @@ export default function TodoList() {
             <div className="flex items-center justify-between text-sm text-gray-600">
               <div>
                 {filteredAndSortedTodos.length !== todos.length && (
-                  <span className="text-indigo-600 font-medium">
+                  <span className="text-blue-600 font-medium">
                     {filteredAndSortedTodos.length} di {todos.length} lavori mostrati
                   </span>
                 )}
@@ -743,7 +746,7 @@ export default function TodoList() {
                 )}
               </div>
               {(searchText || filterEseguito || filterUnita) && (
-                <span className="text-xs bg-indigo-100 text-indigo-800 px-2 py-1 rounded">
+                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
                   Filtri attivi
                 </span>
               )}
@@ -782,7 +785,7 @@ export default function TodoList() {
                   })}
                   type="text"
                   placeholder="Inserisci il lavoro da eseguire..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
                 {errors.lavorodaeseguire && (
                   <p className="mt-1 text-sm text-red-600">{errors.lavorodaeseguire.message}</p>
@@ -795,7 +798,7 @@ export default function TodoList() {
                 </label>
                 <select
                   {...register('unita')}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="">Seleziona un'unità...</option>
                   {unita.map((unitaItem) => {
@@ -857,7 +860,7 @@ export default function TodoList() {
                     </label>
                     <select
                       {...register('Eseguito')}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
                       <option value="false">No - Da eseguire</option>
                       <option value="true">Sì - Completato</option>
@@ -877,7 +880,7 @@ export default function TodoList() {
                   {...register('Note')}
                   placeholder="Note aggiuntive, dettagli, istruzioni specifiche..."
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
                 {!editingTodo && (
                   <p className="mt-1 text-xs text-gray-500">
@@ -906,7 +909,7 @@ export default function TodoList() {
               <button
                 type="submit"
                 className="flex items-center px-4 py-2 text-white rounded-md hover:opacity-90 focus:outline-none focus:ring-2 cursor-pointer"
-                style={{backgroundColor: '#8d9c71'}}
+                style={{backgroundColor: '#2f5fdd'}}
               >
                 <Check className="h-4 w-4 mr-2" />
                 {editingTodo ? 'Aggiorna Lavoro' : 'Salva Lavoro'}
@@ -1098,7 +1101,7 @@ export default function TodoList() {
                         ? 'text-white'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
-                    style={currentPage === pageNum ? {backgroundColor: '#8d9c71'} : {}}
+                    style={currentPage === pageNum ? {backgroundColor: '#2f5fdd'} : {}}
                   >
                     {pageNum}
                   </button>
@@ -1127,7 +1130,7 @@ export default function TodoList() {
       <div className="mt-6 text-sm text-gray-500">
         Totale lavori: {todos.length} | Completati: {todos.filter(t => t.Eseguito).length}
         {filteredAndSortedTodos.length !== todos.length && (
-          <span className="ml-3 text-indigo-600">
+          <span className="ml-3 text-blue-600">
             | Risultati mostrati: {filteredAndSortedTodos.length}
           </span>
         )}

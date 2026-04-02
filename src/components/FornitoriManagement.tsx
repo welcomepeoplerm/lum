@@ -6,6 +6,7 @@ import { db } from '@/lib/firebase';
 import { useAuth } from '@/hooks/useAuth';
 import { Fornitore, Settore } from '@/types';
 import { Plus, Edit2, Trash2, Save, X, Download, Printer, Building, Search, Filter, ChevronDown, ChevronUp, MessageCircle } from 'lucide-react';
+import { Spinner } from '@fluentui/react-components';
 import * as XLSX from 'xlsx';
 
 export default function FornitoriManagement() {
@@ -314,11 +315,11 @@ export default function FornitoriManagement() {
             .header {
               text-align: center;
               margin-bottom: 30px;
-              border-bottom: 2px solid #8d9c71;
+              border-bottom: 2px solid #2f5fdd;
               padding-bottom: 10px;
             }
             .header h1 {
-              color: #8d9c71;
+              color: #2f5fdd;
               margin: 0;
               font-size: 24px;
             }
@@ -338,7 +339,7 @@ export default function FornitoriManagement() {
               text-align: left; 
             }
             th { 
-              background-color: #8d9c71; 
+              background-color: #2f5fdd; 
               color: white;
               font-weight: bold;
             }
@@ -370,7 +371,7 @@ export default function FornitoriManagement() {
               border: 1px solid #dee2e6;
             }
             .stats h3 {
-              color: #8d9c71;
+              color: #2f5fdd;
               margin-top: 0;
             }
             .stats-grid {
@@ -383,12 +384,12 @@ export default function FornitoriManagement() {
               background: white;
               padding: 10px 15px;
               border-radius: 5px;
-              border-left: 4px solid #8d9c71;
+              border-left: 4px solid #2f5fdd;
             }
             .stat-value {
               font-size: 18px;
               font-weight: bold;
-              color: #8d9c71;
+              color: #2f5fdd;
             }
             .stat-label {
               font-size: 14px;
@@ -500,21 +501,21 @@ export default function FornitoriManagement() {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="text-lg">Caricamento fornitori...</div>
+        <Spinner label="Caricamento fornitori..." size="large" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="bg-white shadow rounded-lg p-6 space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Gestione Fornitori</h1>
-          <p className="text-gray-600">Gestisci i fornitori e i loro dati</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="flex items-center">
+          <Building className="h-6 w-6 mr-2" style={{color: '#2f5fdd'}} />
+          <h2 className="text-xl font-semibold text-gray-800">Gestione Fornitori</h2>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
           <button
             onClick={() => setShowFilters(!showFilters)}
             className={`flex items-center justify-center px-3 py-2 rounded-md transition-colors cursor-pointer ${
@@ -522,7 +523,7 @@ export default function FornitoriManagement() {
                 ? 'text-white'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
-            style={showFilters ? {backgroundColor: '#8d9c71'} : {}}
+            style={showFilters ? {backgroundColor: '#2f5fdd'} : {}}
             title="Filtri e ordinamento"
           >
             <Filter className="h-4 w-4 mr-1" />
@@ -551,13 +552,15 @@ export default function FornitoriManagement() {
           <button
             onClick={() => setShowForm(true)}
             className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white rounded-md shadow-sm hover:opacity-90 transition-opacity cursor-pointer w-full sm:w-auto"
-            style={{backgroundColor: '#8d9c71'}}
+            style={{backgroundColor: '#2f5fdd'}}
           >
             <Plus className="h-4 w-4 mr-2" />
             Nuovo Fornitore
           </button>
         </div>
       </div>
+
+      <hr style={{ border: 'none', borderTop: '1px solid #e5e7eb', margin: '0' }} />
 
       {/* Filtri */}
       {showFilters && (
@@ -575,7 +578,7 @@ export default function FornitoriManagement() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Cerca per ragione sociale, referente o email..."
-              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
 
@@ -587,7 +590,7 @@ export default function FornitoriManagement() {
             <select
               value={filterSettore}
               onChange={(e) => setFilterSettore(e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="">Tutti i settori</option>
               {settori.map((settore) => (
@@ -606,7 +609,7 @@ export default function FornitoriManagement() {
             <select
               value={filterAttivo}
               onChange={(e) => setFilterAttivo(e.target.value as 'all' | 'attivi' | 'inattivi')}
-              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="all">Tutti gli stati</option>
               <option value="attivi">Solo attivi</option>
@@ -620,7 +623,7 @@ export default function FornitoriManagement() {
           <div className="flex items-center justify-between text-sm text-gray-600">
             <div>
               {filteredFornitori.length !== fornitori.length && (
-                <span className="text-indigo-600 font-medium">
+                <span className="text-blue-600 font-medium">
                   {filteredFornitori.length} di {fornitori.length} fornitori mostrati
                 </span>
               )}
@@ -631,7 +634,7 @@ export default function FornitoriManagement() {
               )}
             </div>
             {(searchTerm || filterSettore || filterAttivo !== 'all') && (
-              <span className="text-xs bg-indigo-100 text-indigo-800 px-2 py-1 rounded">
+              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
                 Filtri attivi
               </span>
             )}
@@ -658,7 +661,7 @@ export default function FornitoriManagement() {
                   type="text"
                   value={formData.ragioneSociale}
                   onChange={(e) => setFormData({ ...formData, ragioneSociale: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                   required
                   placeholder="Es. Rossi S.r.l."
                 />
@@ -670,7 +673,7 @@ export default function FornitoriManagement() {
                 <select
                   value={formData.settoreId}
                   onChange={(e) => setFormData({ ...formData, settoreId: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                   required
                 >
                   <option value="">Seleziona un settore</option>
@@ -689,7 +692,7 @@ export default function FornitoriManagement() {
                   type="text"
                   value={formData.referente}
                   onChange={(e) => setFormData({ ...formData, referente: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                   required
                   placeholder="Nome del referente"
                 />
@@ -702,7 +705,7 @@ export default function FornitoriManagement() {
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                   required
                   placeholder="email@esempio.it"
                 />
@@ -715,7 +718,7 @@ export default function FornitoriManagement() {
                   type="tel"
                   value={formData.telefono}
                   onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                   placeholder="Es. 06 12345678"
                 />
               </div>
@@ -727,7 +730,7 @@ export default function FornitoriManagement() {
                   type="tel"
                   value={formData.mobile}
                   onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                   placeholder="Es. 333 1234567"
                 />
               </div>
@@ -739,7 +742,7 @@ export default function FornitoriManagement() {
                   type="text"
                   value={formData.sedeLegale}
                   onChange={(e) => setFormData({ ...formData, sedeLegale: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                   placeholder="Via, Città, CAP"
                 />
               </div>
@@ -751,7 +754,7 @@ export default function FornitoriManagement() {
                   type="text"
                   value={formData.codiceFiscale}
                   onChange={(e) => setFormData({ ...formData, codiceFiscale: e.target.value.toUpperCase() })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                   placeholder="RSSMRA80A01H501X"
                   maxLength={16}
                 />
@@ -764,7 +767,7 @@ export default function FornitoriManagement() {
                   type="text"
                   value={formData.partitaIva}
                   onChange={(e) => setFormData({ ...formData, partitaIva: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                   placeholder="12345678901"
                   maxLength={11}
                 />
@@ -776,7 +779,7 @@ export default function FornitoriManagement() {
                 <textarea
                   value={formData.note}
                   onChange={(e) => setFormData({ ...formData, note: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                   rows={3}
                   placeholder="Note aggiuntive..."
                 />
@@ -787,7 +790,7 @@ export default function FornitoriManagement() {
                     type="checkbox"
                     checked={formData.attivo}
                     onChange={(e) => setFormData({ ...formData, attivo: e.target.checked })}
-                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                   />
                   <span className="text-sm font-medium text-gray-700">Fornitore attivo</span>
                 </label>
@@ -805,7 +808,7 @@ export default function FornitoriManagement() {
               <button
                 type="submit"
                 className="inline-flex items-center px-4 py-2 text-white rounded-md hover:opacity-90"
-                style={{backgroundColor: '#8d9c71'}}
+                style={{backgroundColor: '#2f5fdd'}}
               >
                 <Save className="h-4 w-4 mr-2" />
                 {editingId ? 'Modifica' : 'Salva'}
@@ -913,7 +916,7 @@ export default function FornitoriManagement() {
                         )}
                         <button
                           onClick={() => handleEdit(fornitore)}
-                          className="inline-flex items-center p-2 text-indigo-600 hover:text-indigo-900 cursor-pointer"
+                          className="inline-flex items-center p-2 text-blue-600 hover:text-blue-800 cursor-pointer"
                           title="Modifica"
                         >
                           <Edit2 className="h-4 w-4" />

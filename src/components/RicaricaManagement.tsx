@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, orderBy, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/hooks/useAuth';
 import { Ricarica } from '@/types';
-import { Plus, Trash2, Edit, Save, X, Droplets, ChevronUp, ChevronDown, Calendar, Filter, Search, Download, Printer } from 'lucide-react';
+import { Plus, Trash2, Edit, Save, X, Flame, ChevronUp, ChevronDown, Calendar, Filter, Search, Download, Printer } from 'lucide-react';
+import { Spinner } from '@fluentui/react-components';
 import { useForm } from 'react-hook-form';
 import * as XLSX from 'xlsx';
 
@@ -43,73 +44,75 @@ export default function RicaricaManagement() {
   const indicatoreRicaricato = watch('indicatoreRicaricato');
   const diffRicaricata = (Number(indicatoreRicaricato) || 0) - (Number(indicatoreRicarica) || 0);
 
-  // Sort and paginate data
-  const filteredAndSortedRicariche = ricariche
-    .filter(ricarica => {
-      // Filtro anno
-      if (filterAnno && ricarica.dataRicarica.getFullYear().toString() !== filterAnno) {
-        return false;
-      }
-      // Filtro importo (range)
-      if (filterImporto) {
-        const importo = ricarica.importoRicaricato;
-        switch (filterImporto) {
-          case 'basso':
-            if (importo >= 100) return false;
-            break;
-          case 'medio':
-            if (importo < 100 || importo >= 500) return false;
-            break;
-          case 'alto':
-            if (importo < 500) return false;
-            break;
+  // Sort and paginate data with useMemo to prevent unnecessary recalculations
+  const filteredAndSortedRicariche = useMemo(() => {
+    return ricariche
+      .filter(ricarica => {
+        // Filtro anno
+        if (filterAnno && ricarica.dataRicarica.getFullYear().toString() !== filterAnno) {
+          return false;
         }
-      }
-      // Filtro pagato
-      if (filterPagato === 'si' && !ricarica.pagato) return false;
-      if (filterPagato === 'no' && ricarica.pagato) return false;
-      return true;
-    })
-    .sort((a, b) => {
-      let aValue: any, bValue: any;
-      
-      switch (sortField) {
-        case 'dataRicarica':
-          aValue = a.dataRicarica.getTime();
-          bValue = b.dataRicarica.getTime();
-          break;
-        case 'litriRicarica':
-          aValue = a.litriRicarica;
-          bValue = b.litriRicarica;
-          break;
-        case 'importoRicaricato':
-          aValue = a.importoRicaricato;
-          bValue = b.importoRicaricato;
-          break;
-        case 'indicatoreRicarica':
-          aValue = a.indicatoreRicarica;
-          bValue = b.indicatoreRicarica;
-          break;
-        case 'indicatoreRicaricato':
-          aValue = a.indicatoreRicaricato;
-          bValue = b.indicatoreRicaricato;
-          break;
-        case 'diffRicaricata':
-          aValue = a.diffRicaricata;
-          bValue = b.diffRicaricata;
-          break;
-        case 'pagato':
-          aValue = a.pagato ? 1 : 0;
-          bValue = b.pagato ? 1 : 0;
-          break;
-        default:
-          return 0;
-      }
-      
-      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
-      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
-      return 0;
-    });
+        // Filtro importo (range)
+        if (filterImporto) {
+          const importo = ricarica.importoRicaricato;
+          switch (filterImporto) {
+            case 'basso':
+              if (importo >= 100) return false;
+              break;
+            case 'medio':
+              if (importo < 100 || importo >= 500) return false;
+              break;
+            case 'alto':
+              if (importo < 500) return false;
+              break;
+          }
+        }
+        // Filtro pagato
+        if (filterPagato === 'si' && !ricarica.pagato) return false;
+        if (filterPagato === 'no' && ricarica.pagato) return false;
+        return true;
+      })
+      .sort((a, b) => {
+        let aValue: any, bValue: any;
+        
+        switch (sortField) {
+          case 'dataRicarica':
+            aValue = a.dataRicarica.getTime();
+            bValue = b.dataRicarica.getTime();
+            break;
+          case 'litriRicarica':
+            aValue = a.litriRicarica;
+            bValue = b.litriRicarica;
+            break;
+          case 'importoRicaricato':
+            aValue = a.importoRicaricato;
+            bValue = b.importoRicaricato;
+            break;
+          case 'indicatoreRicarica':
+            aValue = a.indicatoreRicarica;
+            bValue = b.indicatoreRicarica;
+            break;
+          case 'indicatoreRicaricato':
+            aValue = a.indicatoreRicaricato;
+            bValue = b.indicatoreRicaricato;
+            break;
+          case 'diffRicaricata':
+            aValue = a.diffRicaricata;
+            bValue = b.diffRicaricata;
+            break;
+          case 'pagato':
+            aValue = a.pagato ? 1 : 0;
+            bValue = b.pagato ? 1 : 0;
+            break;
+          default:
+            return 0;
+        }
+        
+        if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
+        if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+        return 0;
+      });
+  }, [ricariche, filterAnno, filterImporto, filterPagato, sortField, sortDirection]);
 
   // Calcoli per la paginazione sui dati filtrati
   const totalPages = Math.ceil(filteredAndSortedRicariche.length / itemsPerPage);
@@ -152,8 +155,8 @@ export default function RicaricaManagement() {
         <div className="flex items-center space-x-1">
           <span>{children}</span>
           <div className="flex flex-col">
-            <ChevronUp className={`h-3 w-3 ${isActive && sortDirection === 'asc' ? '' : 'text-gray-300'}`} style={isActive && sortDirection === 'asc' ? {color: '#8d9c71'} : {}} />
-            <ChevronDown className={`h-3 w-3 -mt-1 ${isActive && sortDirection === 'desc' ? '' : 'text-gray-300'}`} style={isActive && sortDirection === 'desc' ? {color: '#8d9c71'} : {}} />
+            <ChevronUp className={`h-3 w-3 ${isActive && sortDirection === 'asc' ? '' : 'text-gray-300'}`} style={isActive && sortDirection === 'asc' ? {color: '#2f5fdd'} : {}} />
+            <ChevronDown className={`h-3 w-3 -mt-1 ${isActive && sortDirection === 'desc' ? '' : 'text-gray-300'}`} style={isActive && sortDirection === 'desc' ? {color: '#2f5fdd'} : {}} />
           </div>
         </div>
       </th>
@@ -179,7 +182,7 @@ export default function RicaricaManagement() {
     if (currentPage > totalPages && totalPages > 0) {
       setCurrentPage(1);
     }
-  }, [filteredAndSortedRicariche.length, totalPages, currentPage]);
+  }, [filteredAndSortedRicariche.length, totalPages]);
 
   const loadRicariche = async () => {
     try {
@@ -473,25 +476,29 @@ export default function RicaricaManagement() {
   };
 
   if (loading) {
-    return <div className="p-4 text-center">Caricamento...</div>;
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Spinner label="Caricamento ricariche..." size="large" />
+      </div>
+    );
   }
 
   return (
     <div className="bg-white shadow rounded-lg p-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex items-center">
-            <Droplets className="h-6 w-6 mr-2" style={{color: '#d17f3d'}} />
+            <Flame className="h-6 w-6 mr-2" style={{color: '#ff6b35'}} />
             <h2 className="text-xl font-semibold text-gray-800">Ricariche GAS</h2>
           </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className={`flex items-center justify-center px-3 py-2 rounded-md transition-colors ${
+              className={`flex items-center justify-center px-3 py-2 rounded-md transition-colors cursor-pointer ${
                 showFilters
                   ? 'text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
-              style={showFilters ? {backgroundColor: '#8d9c71'} : {}}
+              style={showFilters ? {backgroundColor: '#2f5fdd'} : {}}
               title="Filtri e ordinamento"
             >
               <Filter className="h-4 w-4 mr-1" />
@@ -513,7 +520,7 @@ export default function RicaricaManagement() {
             </button>
             <button
               onClick={exportToExcel}
-              className="flex items-center justify-center px-3 py-2 bg-green-100 text-green-700 rounded-md hover:bg-green-200 transition-colors"
+              className="flex items-center justify-center px-3 py-2 bg-green-100 text-green-700 rounded-md hover:bg-green-200 transition-colors cursor-pointer"
               title="Esporta in Excel"
             >
               <Download className="h-4 w-4 mr-1" />
@@ -521,7 +528,7 @@ export default function RicaricaManagement() {
             </button>
             <button
               onClick={printTable}
-              className="flex items-center justify-center px-3 py-2 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors"
+              className="flex items-center justify-center px-3 py-2 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors cursor-pointer"
               title="Stampa tabella"
             >
               <Printer className="h-4 w-4 mr-1" />
@@ -535,9 +542,9 @@ export default function RicaricaManagement() {
                   setShowAddForm(true);
                 }}
                 className="flex items-center justify-center px-4 py-2 text-white rounded-md transition-colors cursor-pointer w-full sm:w-auto"
-                style={{backgroundColor: '#8d9c71'}}
-                onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#7a8a60'}
-                onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#8d9c71'}
+                style={{backgroundColor: '#2f5fdd'}}
+                onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#244fbf'}
+                onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#2f5fdd'}
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Nuova Ricarica
@@ -545,6 +552,8 @@ export default function RicaricaManagement() {
             )}
           </div>
         </div>
+
+      <hr style={{ border: 'none', borderTop: '1px solid #e5e7eb', margin: '16px 0 0 0' }} />
 
       {/* Pannello Filtri Collassabile */}
       {showFilters && (
@@ -559,7 +568,7 @@ export default function RicaricaManagement() {
               <select
                 value={filterAnno}
                 onChange={(e) => setFilterAnno(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="">Tutti gli anni</option>
                 {availableYears.map((year) => (
@@ -578,7 +587,7 @@ export default function RicaricaManagement() {
               <select
                 value={filterImporto}
                 onChange={(e) => setFilterImporto(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="">Tutti gli importi</option>
                 <option value="basso">Fino a 100€</option>
@@ -595,7 +604,7 @@ export default function RicaricaManagement() {
               <select
                 value={filterPagato}
                 onChange={(e) => setFilterPagato(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="">Tutti</option>
                 <option value="no">Non pagato</option>
@@ -610,7 +619,7 @@ export default function RicaricaManagement() {
               </label>
               <button
                 onClick={clearFilters}
-                className="w-full px-3 py-2 text-sm bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                className="w-full px-3 py-2 text-sm bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 cursor-pointer"
               >
                 <X className="inline h-4 w-4 mr-1" />
                 Reset Filtri
@@ -624,7 +633,7 @@ export default function RicaricaManagement() {
             <div className="flex items-center justify-between text-sm text-gray-600">
               <div>
                 {filteredAndSortedRicariche.length !== ricariche.length && (
-                  <span className="font-medium" style={{color: '#8d9c71'}}>
+                  <span className="font-medium" style={{color: '#2f5fdd'}}>
                     {filteredAndSortedRicariche.length} di {ricariche.length} ricariche mostrate
                   </span>
                 )}
@@ -637,7 +646,7 @@ export default function RicaricaManagement() {
               {(filterAnno || filterImporto || filterPagato) && (
                 <span 
                   className="text-xs px-2 py-1 rounded text-white"
-                  style={{backgroundColor: '#8d9c71'}}
+                  style={{backgroundColor: '#2f5fdd'}}
                 >
                   Filtri attivi
                 </span>
@@ -660,7 +669,7 @@ export default function RicaricaManagement() {
               <input
                 {...register('dataRicarica', { required: 'Data obbligatoria' })}
                 type="date"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               {errors.dataRicarica && <p className="text-xs text-red-600 mt-1">{errors.dataRicarica.message}</p>}
             </div>
@@ -671,7 +680,7 @@ export default function RicaricaManagement() {
                 {...register('litriRicarica', { required: 'Campo obbligatorio', min: 0 })}
                 type="number"
                 step="0.01"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
@@ -681,7 +690,7 @@ export default function RicaricaManagement() {
                 {...register('importoRicaricato', { required: 'Campo obbligatorio', min: 0 })}
                 type="number"
                 step="0.01"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
@@ -691,7 +700,7 @@ export default function RicaricaManagement() {
                 {...register('indicatoreRicarica', { required: 'Campo obbligatorio', min: 0 })}
                 type="number"
                 step="0.01"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
@@ -701,7 +710,7 @@ export default function RicaricaManagement() {
                 {...register('indicatoreRicaricato', { required: 'Campo obbligatorio', min: 0 })}
                 type="number"
                 step="0.01"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
@@ -716,7 +725,7 @@ export default function RicaricaManagement() {
               <label className="block text-sm font-medium text-gray-700 mb-1">Pagato</label>
               <select
                 {...register('pagato')}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="false">NO</option>
                 <option value="true">SI</option>
@@ -728,16 +737,16 @@ export default function RicaricaManagement() {
             <button
               type="button"
               onClick={cancelEdit}
-              className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+              className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 cursor-pointer"
             >
               Annulla
             </button>
             <button
               type="submit"
-              className="flex items-center px-4 py-2 text-white rounded-md"
-              style={{backgroundColor: '#8d9c71'}}
-              onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#7a8a60'}
-              onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#8d9c71'}
+              className="flex items-center px-4 py-2 text-white rounded-md cursor-pointer"
+              style={{backgroundColor: '#2f5fdd'}}
+              onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#244fbf'}
+              onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#2f5fdd'}
             >
               <Save className="h-4 w-4 mr-2" />
               {editingId ? 'Aggiorna' : 'Salva'}
@@ -803,14 +812,14 @@ export default function RicaricaManagement() {
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <button
                       onClick={() => startEdit(ricarica)}
-                      className="hover:text-gray-900 mr-4 cursor-pointer"
-                      style={{color: '#8d9c71'}}
+                      className="hover:text-gray-900 mr-4 cursor-pointer p-2 rounded hover:bg-gray-50"
+                      style={{color: '#2f5fdd'}}
                     >
                       <Edit className="h-4 w-4" />
                     </button>
                     <button
                       onClick={() => deleteRicarica(ricarica.id)}
-                      className="text-red-600 hover:text-red-900 cursor-pointer"
+                      className="text-red-600 hover:text-red-900 cursor-pointer p-2 rounded hover:bg-red-50"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -832,14 +841,14 @@ export default function RicaricaManagement() {
             <button
               onClick={goToFirstPage}
               disabled={currentPage === 1}
-              className="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-200"
+              className="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-200 cursor-pointer"
             >
               ≪
             </button>
             <button
               onClick={() => goToPage(currentPage - 1)}
               disabled={currentPage === 1}
-              className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-200"
+              className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-200 cursor-pointer"
             >
               ← Prec
             </button>
@@ -861,12 +870,12 @@ export default function RicaricaManagement() {
                   <button
                     key={pageNum}
                     onClick={() => goToPage(pageNum)}
-                    className={`px-3 py-1 text-sm rounded ${
+                    className={`px-3 py-1 text-sm rounded cursor-pointer ${
                       currentPage === pageNum
                         ? 'text-white'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
-                    style={currentPage === pageNum ? {backgroundColor: '#8d9c71'} : {}}
+                    style={currentPage === pageNum ? {backgroundColor: '#2f5fdd'} : {}}
                   >
                     {pageNum}
                   </button>
@@ -877,14 +886,14 @@ export default function RicaricaManagement() {
             <button
               onClick={() => goToPage(currentPage + 1)}
               disabled={currentPage === totalPages}
-              className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-200"
+              className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-200 cursor-pointer"
             >
               Succ →
             </button>
             <button
               onClick={goToLastPage}
               disabled={currentPage === totalPages}
-              className="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-200"
+              className="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-200 cursor-pointer"
             >
               ≫
             </button>
@@ -898,7 +907,7 @@ export default function RicaricaManagement() {
           <span className="ml-3">| Pagate: {ricariche.filter(r => r.pagato).length}</span>
         )}
         {filteredAndSortedRicariche.length !== ricariche.length && (
-          <span className="ml-3" style={{color: '#8d9c71'}}>
+          <span className="ml-3" style={{color: '#2f5fdd'}}>
             | Risultati mostrati: {filteredAndSortedRicariche.length}
           </span>
         )}

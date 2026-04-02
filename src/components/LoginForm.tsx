@@ -1,17 +1,117 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useAuth } from '@/hooks/useAuth';
 import { LoginCredentials } from '@/types';
-import { Eye, EyeOff } from 'lucide-react';
+import { makeStyles, Spinner } from '@fluentui/react-components';
+import { EyeRegular, EyeOffRegular } from '@fluentui/react-icons';
+
+const useStyles = makeStyles({
+  leftPanel: {
+    flex: '1 1 50%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#ffffff',
+    padding: '48px 56px',
+  },
+  formWrapper: {
+    width: '100%',
+    maxWidth: '380px',
+  },
+  inputWrap: {
+    position: 'relative' as const,
+    display: 'flex',
+    alignItems: 'center',
+    marginBottom: '16px',
+  },
+  input: {
+    width: '100%',
+    height: '50px',
+    border: '1.5px solid #dde3ef',
+    borderRadius: '6px',
+    padding: '0 48px 0 16px',
+    fontSize: '15px',
+    color: '#222',
+    backgroundColor: '#fafbfd',
+    outline: 'none',
+    fontFamily: 'inherit',
+    boxSizing: 'border-box' as const,
+    transition: 'border-color 0.2s, box-shadow 0.2s',
+    appearance: 'none' as const,
+  },
+  toggleBtn: {
+    position: 'absolute' as const,
+    right: '12px',
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    color: '#aab0c0',
+    display: 'flex',
+    alignItems: 'center',
+    padding: '4px',
+  },
+  checkRow: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: '22px',
+  },
+  checkLabel: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    fontSize: '14px',
+    color: '#555',
+    cursor: 'pointer',
+    userSelect: 'none' as const,
+  },
+  loginBtn: {
+    width: '100%',
+    height: '50px',
+    backgroundColor: '#0F6CBD',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '6px',
+    fontSize: '15px',
+    fontWeight: 700 as const,
+    letterSpacing: '0.1em',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px',
+    marginBottom: '8px',
+    boxShadow: '0 4px 16px rgba(15,108,189,0.3)',
+    transition: 'background-color 0.2s, opacity 0.2s',
+  },
+  errorMsg: {
+    color: '#c0392b',
+    fontSize: '13px',
+    textAlign: 'center' as const,
+    background: '#fff0ef',
+    borderRadius: '6px',
+    padding: '8px 12px',
+    marginBottom: '14px',
+  },
+  validationMsg: {
+    color: '#c0392b',
+    fontSize: '12px',
+    marginTop: '-10px',
+    marginBottom: '10px',
+    paddingLeft: '2px',
+  },
+});
 
 export default function LoginForm() {
+  const styles = useStyles();
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [rememberMe, setRememberMe] = useState(false);
   const { login } = useAuth();
-  
+
   const { register, handleSubmit, formState: { errors } } = useForm<LoginCredentials>();
 
   const onSubmit = async (data: LoginCredentials) => {
@@ -19,134 +119,146 @@ export default function LoginForm() {
       setLoading(true);
       setError(null);
       await login(data);
-    } catch (err: any) {
-      setError(err.message || 'Errore durante il login');
+    } catch (err: unknown) {
+      setError((err as Error).message || 'Errore durante il login');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <div className="flex items-center justify-center mb-6">
-            <svg 
-              version="1.1" 
-              xmlns="http://www.w3.org/2000/svg" 
-              xmlnsXlink="http://www.w3.org/1999/xlink" 
-              viewBox="0 0 285 285" 
-              className="w-12 h-12"
-              style={{color: '#8d9c71', fill: 'currentColor'}}
-            >
-              <g>
-                <g>
-                  <path d="M272.046,29.15H12.954C5.798,29.15,0,34.945,0,42.101v161.926c0,7.162,5.798,12.951,12.954,12.951h116.592v12.958H61.534
-                    c-7.153,0-12.955,5.808-12.955,12.951c0,7.168,5.802,12.963,12.955,12.963h161.933c7.152,0,12.954-5.795,12.954-12.963
-                    c0-7.144-5.802-12.951-12.954-12.951h-68.013v-12.958h116.592c7.156,0,12.954-5.789,12.954-12.951V42.101
-                    C285,34.945,279.202,29.15,272.046,29.15z M259.092,191.07H25.909V55.052h233.183V191.07z"/>
-                  <path d="M183.942,141.548c0.399,0.167,0.819,0.248,1.237,0.248c0.881,0,1.744-0.359,2.369-1.033l5.13-5.504l8.269,22.705
-                    c0.479,1.323,1.723,2.146,3.043,2.146c0.365,0,0.742-0.067,1.107-0.21c1.683-0.6,2.548-2.468,1.933-4.15l-8.263-22.705
-                    l7.468,0.916c1.345,0.204,2.647-0.52,3.269-1.713c0.625-1.206,0.436-2.666-0.47-3.667l-20.364-22.587
-                    c-0.878-0.977-2.276-1.323-3.513-0.866c-1.24,0.445-2.081,1.608-2.125,2.925l-1.085,30.387
-                    C181.895,139.791,182.692,141.035,183.942,141.548z"/>
-                  <path d="M55.596,123.172l39.923-34.338l39.933,34.338c0.798,0.693,1.788,1.039,2.783,1.039c1.2,0,2.388-0.507,3.232-1.497
-                    c1.537-1.781,1.336-4.484-0.449-6.024L98.305,79.97c-1.602-1.379-3.964-1.379-5.569,0l-42.707,36.72
-                    c-1.791,1.54-1.989,4.243-0.452,6.024C51.112,124.527,53.809,124.719,55.596,123.172z"/>
-                  <path d="M97.384,94.289c-1.07-0.916-2.656-0.916-3.723,0l-32.177,27.77c-0.627,0.538-1.002,1.324-1.002,2.152v40.14
-                    c0,1.571,1.293,2.852,2.848,2.852h64.366c1.577,0,2.852-1.28,2.852-2.852v-40.14c0-0.829-0.362-1.614-0.98-2.152L97.384,94.289z
-                    M92.671,154.61c0,1.571-1.271,2.852-2.845,2.852h-9.96c-1.577,0-2.845-1.28-2.845-2.852v-9.964c0-1.596,1.268-2.864,2.845-2.864
-                    h9.96c1.574,0,2.845,1.268,2.845,2.864V154.61z M92.671,133.254c0,1.565-1.271,2.845-2.845,2.845h-9.96
-                    c-1.577,0-2.845-1.28-2.845-2.845v-9.982c0-1.571,1.268-2.845,2.845-2.845h9.96c1.574,0,2.845,1.274,2.845,2.845V133.254z
-                    M114.031,154.61c0,1.571-1.271,2.852-2.848,2.852h-9.967c-1.562,0-2.848-1.28-2.848-2.852v-9.964
-                    c0-1.596,1.287-2.864,2.848-2.864h9.967c1.577,0,2.848,1.268,2.848,2.864V154.61z M114.031,133.254
-                    c0,1.565-1.271,2.845-2.848,2.845h-9.967c-1.562,0-2.848-1.28-2.848-2.845v-9.982c0-1.571,1.287-2.845,2.848-2.845h9.967
-                    c1.577,0,2.848,1.274,2.848,2.845V133.254z"/>
-                </g>
-              </g>
-            </svg>
-            <h1 className="ml-3 text-4xl font-bold" style={{color: '#8d9c71'}}>LUM</h1>
-          </div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Accedi al tuo account
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            LyfeUmbria Manager
-          </p>
-        </div>
-        
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
-          <div className="rounded-md shadow-sm -space-y-px">
-            <div>
-              <label htmlFor="email" className="sr-only">Email</label>
+    <div style={{ minHeight: '100vh', display: 'flex' }}>
+
+      {/*  Left panel: form  */}
+      <div className={styles.leftPanel}>
+        <div className={styles.formWrapper}>
+
+          {/* Title */}
+          <h1 style={{ fontSize: '30px', fontWeight: 800, letterSpacing: '0.05em', marginBottom: '32px', textAlign: 'center' }}>
+            <span style={{ color: '#1a1a2e' }}>ENTRA </span>
+            <span style={{ color: '#0F6CBD' }}>ORA</span>
+          </h1>
+
+          <form onSubmit={handleSubmit(onSubmit)}>
+
+            {/* Email */}
+            <div className={styles.inputWrap}>
               <input
-                {...register('email', { 
+                type="email"
+                placeholder="Username o Email"
+                className={styles.input}
+                style={errors.email ? { borderColor: '#e74c3c', boxShadow: '0 0 0 2px rgba(231,76,60,0.15)' } : {}}
+                {...register('email', {
                   required: 'Email obbligatoria',
                   pattern: {
                     value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                    message: 'Email non valida'
-                  }
+                    message: 'Email non valida',
+                  },
                 })}
-                type="email"
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-black rounded-t-md focus:outline-none focus:z-10 sm:text-sm"
-                onFocus={(e) => {(e.target as HTMLInputElement).style.borderColor = '#8d9c71'; (e.target as HTMLInputElement).style.boxShadow = '0 0 0 2px rgba(141, 156, 113, 0.2)';}}
-                onBlur={(e) => {(e.target as HTMLInputElement).style.borderColor = '#d1d5db'; (e.target as HTMLInputElement).style.boxShadow = 'none';}}
-                placeholder="Indirizzo email"
               />
-              {errors.email && (
-                <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
-              )}
             </div>
-            
-            <div className="relative">
-              <label htmlFor="password" className="sr-only">Password</label>
+            {errors.email && <p className={styles.validationMsg}>{errors.email.message}</p>}
+
+            {/* Password */}
+            <div className={styles.inputWrap}>
               <input
-                {...register('password', { required: 'Password obbligatoria' })}
                 type={showPassword ? 'text' : 'password'}
-                className="appearance-none rounded-none relative block w-full px-3 py-2 pr-10 border border-gray-300 placeholder-gray-500 text-black rounded-b-md focus:outline-none focus:z-10 sm:text-sm"
-                onFocus={(e) => {(e.target as HTMLInputElement).style.borderColor = '#8d9c71'; (e.target as HTMLInputElement).style.boxShadow = '0 0 0 2px rgba(141, 156, 113, 0.2)';}}
-                onBlur={(e) => {(e.target as HTMLInputElement).style.borderColor = '#d1d5db'; (e.target as HTMLInputElement).style.boxShadow = 'none';}}
                 placeholder="Password"
+                className={styles.input}
+                style={errors.password ? { borderColor: '#e74c3c', boxShadow: '0 0 0 2px rgba(231,76,60,0.15)' } : {}}
+                {...register('password', { required: 'Password obbligatoria' })}
               />
               <button
                 type="button"
-                className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                className={styles.toggleBtn}
                 onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? 'Nascondi password' : 'Mostra password'}
               >
-                {showPassword ? (
-                  <EyeOff className="h-4 w-4 text-gray-400" />
-                ) : (
-                  <Eye className="h-4 w-4 text-gray-400" />
-                )}
+                {showPassword ? <EyeOffRegular fontSize={20} /> : <EyeRegular fontSize={20} />}
               </button>
-              {errors.password && (
-                <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
-              )}
             </div>
-          </div>
+            {errors.password && <p className={styles.validationMsg}>{errors.password.message}</p>}
 
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded">
-              {error}
+            {/* Remember me row */}
+            <div className={styles.checkRow}>
+              <label className={styles.checkLabel}>
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={e => setRememberMe(e.target.checked)}
+                  style={{ width: '16px', height: '16px', accentColor: '#0F6CBD', cursor: 'pointer' }}
+                />
+                Rimani connesso
+              </label>
             </div>
-          )}
 
-          <div>
+            {error && <p className={styles.errorMsg}>{error}</p>}
+
+            {/* Submit */}
             <button
               type="submit"
               disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{
-                backgroundColor: '#8d9c71'
-              }}
-              onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#7a8a60'}
-              onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#8d9c71'}
+              className={styles.loginBtn}
+              style={loading ? { opacity: 0.75 } : {}}
             >
-              {loading ? 'Accesso in corso...' : 'Accedi'}
+              {loading && <Spinner size="tiny" appearance="inverted" />}
+              {loading ? 'Accesso in corso...' : 'ACCEDI'}
             </button>
-          </div>
-        </form>
+
+          </form>
+        </div>
       </div>
+
+      {/*  Right panel: blue decoration (hidden on mobile)  */}
+      <div
+        className="hidden md:flex"
+        style={{
+          flex: '1 1 50%',
+          flexDirection: 'column' as const,
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'linear-gradient(160deg, #c9e8f8 0%, #0F6CBD 45%, #1a3a6b 100%)',
+          position: 'relative' as const,
+          overflow: 'hidden',
+          padding: '40px',
+        }}
+      >
+        {/* Decorative circles */}
+        <div style={{ position: 'absolute', top: '-80px', right: '-80px', width: '320px', height: '320px', borderRadius: '50%', background: 'rgba(255,255,255,0.07)' }} />
+        <div style={{ position: 'absolute', bottom: '-60px', left: '-60px', width: '260px', height: '260px', borderRadius: '50%', background: 'rgba(255,255,255,0.06)' }} />
+        <div style={{ position: 'absolute', top: '30%', left: '10%', width: '120px', height: '120px', borderRadius: '50%', background: 'rgba(255,255,255,0.05)' }} />
+
+        {/* Logo + tagline */}
+        <div style={{ textAlign: 'center', position: 'relative', zIndex: 1 }}>
+          <div style={{
+            width: '140px', height: '140px', borderRadius: '50%',
+            background: 'rgba(255,255,255,0.15)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            margin: '0 auto 24px',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
+            backdropFilter: 'blur(4px)',
+          }}>
+            <img
+              src="/logo.png"
+              alt="LyfeUmbria"
+              style={{ width: '100px', height: '100px', objectFit: 'contain' }}
+              onError={(e) => {
+                const img = e.currentTarget as HTMLImageElement;
+                img.style.display = 'none';
+                const parent = img.parentElement as HTMLElement;
+                parent.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="72" height="72" viewBox="0 0 24 24" fill="rgba(255,255,255,0.9)"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>';
+              }}
+            />
+          </div>
+          <p style={{ color: '#ffffff', fontSize: '24px', fontWeight: 700, letterSpacing: '0.04em', marginBottom: '10px' }}>
+            LyfeUmbria
+          </p>
+          <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: '15px', maxWidth: '260px', lineHeight: 1.6 }}>
+            Gestione proprietà immobiliare
+          </p>
+        </div>
+      </div>
+
     </div>
   );
 }

@@ -8,6 +8,7 @@ import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { Users, UserPlus, Trash2, Shield, User as UserIcon } from 'lucide-react';
 import { useForm } from 'react-hook-form';
+import { Spinner } from '@fluentui/react-components';
 
 export default function UserManagement() {
   const [users, setUsers] = useState<User[]>([]);
@@ -91,7 +92,7 @@ export default function UserManagement() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-500"></div>
+        <Spinner label="Caricamento utenti..." size="large" />
       </div>
     );
   }
@@ -100,15 +101,15 @@ export default function UserManagement() {
     <div className="bg-white shadow rounded-lg p-6">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center">
-          <Users className="h-6 w-6 mr-2" style={{color: '#8d9c71'}} />
+          <Users className="h-6 w-6 mr-2" style={{color: '#2f5fdd'}} />
           <h2 className="text-xl font-semibold text-gray-900">Gestione Utenti</h2>
         </div>
         <button
           onClick={() => setShowAddForm(!showAddForm)}
           className="flex items-center px-4 py-2 text-white rounded-md focus:outline-none focus:ring-2"
-          style={{backgroundColor: '#8d9c71'}}
-          onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#7a8a60'}
-          onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#8d9c71'}
+          style={{backgroundColor: '#2f5fdd'}}
+          onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#244fbf'}
+          onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#2f5fdd'}
         >
           <UserPlus className="h-4 w-4 mr-2" />
           Nuovo Utente
@@ -123,7 +124,7 @@ export default function UserManagement() {
               <input
                 {...register('name', { required: 'Nome obbligatorio' })}
                 type="text"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               {errors.name && (
                 <p className="mt-1 text-xs text-red-600">{errors.name.message}</p>
@@ -141,7 +142,7 @@ export default function UserManagement() {
                   }
                 })}
                 type="email"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               {errors.email && (
                 <p className="mt-1 text-xs text-red-600">{errors.email.message}</p>
@@ -159,7 +160,7 @@ export default function UserManagement() {
                   }
                 })}
                 type="password"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               {errors.password && (
                 <p className="mt-1 text-xs text-red-600">{errors.password.message}</p>
@@ -170,7 +171,7 @@ export default function UserManagement() {
               <label className="block text-sm font-medium text-gray-700 mb-1">Ruolo</label>
               <select
                 {...register('role')}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="user">User</option>
                 <option value="admin">Admin</option>
@@ -182,7 +183,7 @@ export default function UserManagement() {
             <button
               type="submit"
               className="px-4 py-2 text-white rounded-md hover:opacity-90 cursor-pointer"
-              style={{backgroundColor: '#8d9c71'}}
+              style={{backgroundColor: '#2f5fdd'}}
             >
               Aggiungi
             </button>
@@ -219,7 +220,7 @@ export default function UserManagement() {
                     <div className="flex-shrink-0 h-10 w-10">
                       <div 
                         className="h-10 w-10 rounded-full flex items-center justify-center"
-                        style={{backgroundColor: '#8d9c71'}}
+                        style={{backgroundColor: '#2f5fdd'}}
                       >
                         <UserIcon className="h-5 w-5 text-white" />
                       </div>

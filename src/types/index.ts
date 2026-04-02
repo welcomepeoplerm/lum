@@ -110,3 +110,61 @@ export interface Fornitore {
   createdAt: Date;
   userId: string;
 }
+
+export interface Contatto {
+  id: string;
+  nominativo: string;
+  telefono?: string;
+  mobile?: string;
+  indirizzo?: string;
+  competenza?: string;
+  createdAt: Date;
+  userId: string;
+}
+
+export interface Manutenzione {
+  id: string;
+  descrizioneBreve: string;
+  oggetto: string;
+  fornitoreId: string; // FK Fornitore
+  imponibile: number;
+  aliquotaIVA: number; // percentuale (es. 22)
+  importoTotale: number;
+  numeroDocumento: string;
+  dataInizio: Date;
+  dataFine: Date;
+  statoPagamento: 'Pagato' | 'Da Pagare' | 'In Scadenza' | 'Contestato';
+  metodoPagamento: 'Bonifico' | 'Carta di Credito' | 'RID' | 'Contanti';
+  categoriaSpesaId: string; // FK Settore
+  note?: string;
+  scadenzaId?: string; // FK Scadenza collegata
+  createdAt: Date;
+  userId: string;
+}
+
+export interface LetturaAcqua {
+  id: string;
+  dataLettura: Date;
+  letturaContatore: string;
+  reale: boolean; // default true
+  dataComunicazione: Date | null;
+  m3LetturaPrecedente: number; // Differenza tra lettura corrente e precedente
+  createdAt: Date;
+  userId: string;
+}
+
+export interface Utenza {
+  id: string;
+  portale: string;
+  categoria: string;
+  utente: string;
+  password: string; // stored AES-GCM encrypted
+  email: string;
+  codiceSicurezza: string; // stored AES-GCM encrypted
+  link: string;
+  pin: string; // stored AES-GCM encrypted
+  puk: string; // stored AES-GCM encrypted
+  note?: string;
+  createdAt: Date;
+  userId: string;
+}

@@ -1,11 +1,13 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Calendar, Plus, Filter, Clock, AlertTriangle, CheckCircle, Euro, FileText, Zap, Wrench, Receipt, Grid, List as ListIcon, ChevronLeft, ChevronRight, Download, Printer } from 'lucide-react';
+import { Spinner } from '@fluentui/react-components';
+import { Calendar, Plus, Filter, Clock, AlertTriangle, CheckCircle, Euro, FileText, Zap, Wrench, Receipt, Grid, List as ListIcon, ChevronLeft, ChevronRight, Download, Printer, Bell, BellRing } from 'lucide-react';
 import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, orderBy, where } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Scadenza } from '../types';
 import { useAuth } from '../hooks/useAuth';
+import { sendAllScadenzeReminders, BulkReminderResult } from '../lib/emailService';
 import * as XLSX from 'xlsx';
 
 interface ScadenzarioManagerProps {
@@ -23,6 +25,8 @@ const ScadenzarioManager = ({ initialFilter = null, onFilterChange }: Scadenzari
   const [filtroStato, setFiltroStato] = useState<string>('tutte');
   const [vistaCalendario, setVistaCalendario] = useState(false);
   const [meseCorrente, setMeseCorrente] = useState(new Date());
+  const [sendingReminders, setSendingReminders] = useState(false);
+  const [reminderResult, setReminderResult] = useState<BulkReminderResult | null>(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -227,6 +231,20 @@ const ScadenzarioManager = ({ initialFilter = null, onFilterChange }: Scadenzari
     setShowForm(true);
   };
 
+  const handleSendAllReminders = async () => {
+    setSendingReminders(true);
+    setReminderResult(null);
+    try {
+      const res = await sendAllScadenzeReminders(scadenze, 7);
+      setReminderResult(res);
+    } catch (err) {
+      console.error('Errore invio promemoria:', err);
+      alert('Errore durante l\'invio dei promemoria.');
+    } finally {
+      setSendingReminders(false);
+    }
+  };
+
   const getCategoriaIcon = (categoria: string) => {
     switch (categoria) {
       case 'tributi': return Receipt;
@@ -240,7 +258,7 @@ const ScadenzarioManager = ({ initialFilter = null, onFilterChange }: Scadenzari
   const getCategoriaColor = (categoria: string) => {
     switch (categoria) {
       case 'tributi': return '#d17f3d';
-      case 'bollette': return '#8d9c71';
+      case 'bollette': return '#2f5fdd';
       case 'manutenzione': return '#46433c';
       case 'documenti': return '#6366f1';
       default: return '#6b7280';
@@ -400,7 +418,7 @@ const ScadenzarioManager = ({ initialFilter = null, onFilterChange }: Scadenzari
             <title>Scadenzario - ${new Date().toLocaleDateString('it-IT')}</title>
             <style>
               body { font-family: Arial, sans-serif; margin: 20px; }
-              h1 { text-align: center; color: #8d9c71; margin-bottom: 30px; }
+              h1 { text-align: center; color: #2f5fdd; margin-bottom: 30px; }
               .info { text-align: center; margin-bottom: 20px; color: #666; }
               .summary { background-color: #f8f9fa; padding: 15px; margin: 20px 0; border-radius: 5px; }
               .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
@@ -410,7 +428,7 @@ const ScadenzarioManager = ({ initialFilter = null, onFilterChange }: Scadenzari
               .completate { color: #16a34a; }
               .imminenti { color: #f59e0b; }
               .scadute { color: #dc2626; }
-              .importo-totale { color: #8d9c71; }
+              .importo-totale { color: #2f5fdd; }
               table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 11px; }
               th, td { border: 1px solid #ddd; padding: 5px; text-align: left; }
               th { background-color: #f5f5f5; font-weight: bold; }
@@ -534,62 +552,122 @@ const ScadenzarioManager = ({ initialFilter = null, onFilterChange }: Scadenzari
   };
 
   const renderCalendario = () => {
-    const giorni = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];
     const daysInMonth = getDaysInMonth(meseCorrente);
     const firstDayOfMonth = getFirstDayOfMonth(meseCorrente);
     const today = new Date();
-    
+
     const calendarDays = [];
-    
-    // Giorni vuoti all'inizio
+
+    // Empty slots before first day
     for (let i = 0; i < firstDayOfMonth; i++) {
       calendarDays.push(
-        <div key={`empty-${i}`} className="h-20 border border-gray-100"></div>
+        <div key={`empty-${i}`} style={{ minHeight: '110px', backgroundColor: '#fafbfd' }} />
       );
     }
-    
-    // Giorni del mese
+
     for (let day = 1; day <= daysInMonth; day++) {
       const scadenzeGiorno = getScadenzePerGiorno(day);
-      const isToday = today.getDate() === day && 
-                      today.getMonth() === meseCorrente.getMonth() && 
-                      today.getFullYear() === meseCorrente.getFullYear();
-      
+      const isToday =
+        today.getDate() === day &&
+        today.getMonth() === meseCorrente.getMonth() &&
+        today.getFullYear() === meseCorrente.getFullYear();
+      const hasEvents = scadenzeGiorno.length > 0;
+
       calendarDays.push(
-        <div key={day} className={`h-20 border border-gray-100 p-1 ${isToday ? 'bg-blue-50 border-blue-200' : 'hover:bg-gray-50'}`}>
-          <div className={`text-sm font-medium mb-1 ${isToday ? 'text-blue-600' : 'text-gray-900'}`}>
+        <div
+          key={day}
+          style={{
+            minHeight: '110px',
+            backgroundColor: isToday ? '#eaf4ff' : '#ffffff',
+            borderTop: isToday ? '3px solid #0F6CBD' : '1px solid #e5e7eb',
+            padding: '8px',
+            position: 'relative',
+            transition: 'background-color 0.15s',
+          }}
+        >
+          {/* Day number */}
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '28px',
+              height: '28px',
+              borderRadius: '50%',
+              marginBottom: '6px',
+              fontSize: '13px',
+              fontWeight: isToday ? 700 : 500,
+              backgroundColor: isToday ? '#0F6CBD' : 'transparent',
+              color: isToday ? '#ffffff' : hasEvents ? '#1a1f36' : '#9ca3af',
+            }}
+          >
             {day}
           </div>
-          <div className="space-y-1">
-            {scadenzeGiorno.slice(0, 2).map((scadenza) => {
+
+          {/* Events */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+            {scadenzeGiorno.slice(0, 3).map((scadenza) => {
               const IconComponent = getCategoriaIcon(scadenza.categoria);
+              const color = scadenza.completata
+                ? { bg: '#d1fae5', text: '#065f46', dot: '#059669' }
+                : isScadenzaScaduta(scadenza.dataScadenza)
+                ? { bg: '#fee2e2', text: '#991b1b', dot: '#ef4444' }
+                : isScadenzaImminente(scadenza.dataScadenza)
+                ? { bg: '#fff7ed', text: '#92400e', dot: '#f59e0b' }
+                : { bg: '#eff6ff', text: '#1e40af', dot: '#3b82f6' };
               return (
                 <div
                   key={scadenza.id}
                   onClick={() => editScadenza(scadenza)}
-                  className={`text-xs p-1 rounded cursor-pointer hover:opacity-80 transition-opacity flex items-center ${
-                    scadenza.completata ? 'bg-green-100 text-green-800' :
-                    isScadenzaScaduta(scadenza.dataScadenza) ? 'bg-red-100 text-red-800' :
-                    isScadenzaImminente(scadenza.dataScadenza) ? 'bg-orange-100 text-orange-800' :
-                    'bg-blue-100 text-blue-800'
-                  }`}
-                  title={`${scadenza.titolo} - ${scadenza.categoria}`}
+                  title={`${scadenza.titolo} — ${scadenza.categoria}`}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    padding: '2px 6px',
+                    borderRadius: '20px',
+                    backgroundColor: color.bg,
+                    color: color.text,
+                    fontSize: '11px',
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                    overflow: 'hidden',
+                    whiteSpace: 'nowrap' as const,
+                  }}
                 >
-                  <IconComponent className="h-3 w-3 mr-1 flex-shrink-0" />
-                  <span className="truncate">{scadenza.titolo}</span>
+                  <span
+                    style={{
+                      width: '6px',
+                      height: '6px',
+                      borderRadius: '50%',
+                      backgroundColor: color.dot,
+                      flexShrink: 0,
+                    }}
+                  />
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {scadenza.titolo}
+                  </span>
                 </div>
               );
             })}
-            {scadenzeGiorno.length > 2 && (
-              <div className="text-xs text-gray-500 text-center">
-                +{scadenzeGiorno.length - 2} altro/i
+            {scadenzeGiorno.length > 3 && (
+              <div
+                style={{
+                  fontSize: '11px',
+                  color: '#6b7280',
+                  textAlign: 'center' as const,
+                  fontWeight: 600,
+                  paddingTop: '1px',
+                }}
+              >
+                +{scadenzeGiorno.length - 3} altri
               </div>
             )}
           </div>
         </div>
       );
     }
-    
+
     return calendarDays;
   };
 
@@ -599,10 +677,10 @@ const ScadenzarioManager = ({ initialFilter = null, onFilterChange }: Scadenzari
       <div className="bg-white shadow rounded-lg p-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
           <div className="flex items-center">
-            <Calendar className="h-8 w-8" style={{color: '#8d9c71'}} />
+            <Calendar className="h-8 w-8" style={{color: '#2f5fdd'}} />
             <div className="ml-3">
               <h1 className="text-2xl font-bold" style={{color: '#46433c'}}>Scadenzario</h1>
-              <p className="text-sm" style={{color: '#8d9c71'}}>Gestione scadenze e promemoria</p>
+              <p className="text-sm" style={{color: '#2f5fdd'}}>Gestione scadenze e promemoria</p>
             </div>
           </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
@@ -614,7 +692,7 @@ const ScadenzarioManager = ({ initialFilter = null, onFilterChange }: Scadenzari
                     ? 'text-white shadow-sm'
                     : 'text-gray-600 hover:text-gray-800'
                 }`}
-                style={{backgroundColor: !vistaCalendario ? '#8d9c71' : 'transparent'}}
+                style={{backgroundColor: !vistaCalendario ? '#2f5fdd' : 'transparent'}}
               >
                 <ListIcon className="h-4 w-4 mr-1" />
                 Lista
@@ -626,7 +704,7 @@ const ScadenzarioManager = ({ initialFilter = null, onFilterChange }: Scadenzari
                     ? 'text-white shadow-sm'
                     : 'text-gray-600 hover:text-gray-800'
                 }`}
-                style={{backgroundColor: vistaCalendario ? '#8d9c71' : 'transparent'}}
+                style={{backgroundColor: vistaCalendario ? '#2f5fdd' : 'transparent'}}
               >
                 <Grid className="h-4 w-4 mr-1" />
                 Calendario
@@ -650,11 +728,25 @@ const ScadenzarioManager = ({ initialFilter = null, onFilterChange }: Scadenzari
               <Printer className="h-4 w-4 mr-1" />
               Stampa
             </button>
+
+            <button
+              onClick={handleSendAllReminders}
+              disabled={sendingReminders}
+              className="inline-flex items-center justify-center px-3 py-2 text-sm font-medium bg-amber-100 text-amber-700 rounded-md hover:bg-amber-200 transition-colors disabled:opacity-60"
+              title="Invia email di promemoria per tutte le scadenze nei prossimi 7 giorni con email configurata"
+            >
+              {sendingReminders ? (
+                <Spinner size="extra-tiny" style={{ marginRight: '6px' }} />
+              ) : (
+                <BellRing className="h-4 w-4 mr-1" />
+              )}
+              Invia promemoria
+            </button>
             
             <button
               onClick={() => setShowForm(true)}
               className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white rounded-md shadow-sm hover:opacity-90 transition-opacity cursor-pointer w-full sm:w-auto"
-              style={{backgroundColor: '#8d9c71'}}
+              style={{backgroundColor: '#2f5fdd'}}
             >
               <Plus className="h-4 w-4 mr-2" />
               Nuova Scadenza
@@ -707,6 +799,38 @@ const ScadenzarioManager = ({ initialFilter = null, onFilterChange }: Scadenzari
           </div>
         </div>
       </div>
+
+      {/* Risultato invio promemoria */}
+      {reminderResult && (
+        <div className={`rounded-lg border p-4 text-sm ${reminderResult.errors > 0 ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200'}`}>
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <p className="font-semibold mb-1">
+                {reminderResult.sent === 0 && reminderResult.errors === 0
+                  ? '⚠️ Nessun promemoria inviato'
+                  : `✅ Promemoria inviati: ${reminderResult.sent}`}
+                {reminderResult.skipped > 0 && ` · Saltati (senza email): ${reminderResult.skipped}`}
+                {reminderResult.errors > 0 && ` · Errori: ${reminderResult.errors}`}
+              </p>
+              <ul className="space-y-0.5 text-xs text-gray-600">
+                {reminderResult.details.map((d, i) => (
+                  <li key={i}>
+                    {d.status === 'sent' && '📧'}
+                    {d.status === 'skipped' && '⚠️'}
+                    {d.status === 'error' && '❌'}
+                    {' '}<strong>{d.titolo}</strong>
+                    {d.reason && ` — ${d.reason}`}
+                  </li>
+                ))}
+                {reminderResult.sent === 0 && reminderResult.errors === 0 && reminderResult.skipped === 0 && (
+                  <li>Nessuna scadenza nei prossimi 7 giorni con email configurata.</li>
+                )}
+              </ul>
+            </div>
+            <button onClick={() => setReminderResult(null)} className="text-gray-400 hover:text-gray-600 flex-shrink-0">✕</button>
+          </div>
+        </div>
+      )}
 
       {/* Filtri */}
       <div className="bg-white shadow rounded-lg p-4">
@@ -860,12 +984,12 @@ const ScadenzarioManager = ({ initialFilter = null, onFilterChange }: Scadenzari
                 <div style={{
                   width: '20px',
                   height: '20px',
-                  border: '2px solid #8d9c71',
+                  border: '2px solid #2f5fdd',
                   borderRadius: '4px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  backgroundColor: formData.ricorrente ? '#8d9c71' : 'white'
+                  backgroundColor: formData.ricorrente ? '#2f5fdd' : 'white'
                 }}>
                   {formData.ricorrente && (
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3">
@@ -982,7 +1106,7 @@ const ScadenzarioManager = ({ initialFilter = null, onFilterChange }: Scadenzari
               <button
                 type="submit"
                 className="px-4 py-2 text-sm font-medium text-white rounded-md hover:opacity-90 transition-opacity cursor-pointer"
-                style={{backgroundColor: '#8d9c71'}}
+                style={{backgroundColor: '#2f5fdd'}}
               >
                 {editingScadenza ? 'Aggiorna' : 'Salva'}
               </button>
@@ -994,70 +1118,81 @@ const ScadenzarioManager = ({ initialFilter = null, onFilterChange }: Scadenzari
       {/* Vista Calendario o Lista */}
       {vistaCalendario ? (
         /* Vista Calendario */
-        <div className="bg-white shadow rounded-lg">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-medium" style={{color: '#46433c'}}>
+        <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', boxShadow: '0 2px 12px rgba(0,0,0,0.08)', overflow: 'hidden' }}>
+
+          {/* Calendar header */}
+          <div style={{ background: 'linear-gradient(135deg, #0F6CBD 0%, #1a5fa8 100%)', padding: '20px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <Calendar style={{ color: 'rgba(255,255,255,0.85)', width: '22px', height: '22px' }} />
+              <span style={{ color: '#ffffff', fontSize: '17px', fontWeight: 700, letterSpacing: '0.01em' }}>
                 Calendario Scadenze
-              </h3>
-              <div className="flex items-center space-x-4">
-                <button
-                  onClick={() => navigaMese('precedente')}
-                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
-                >
-                  <ChevronLeft className="h-5 w-5" />
-                </button>
-                
-                <div className="text-lg font-semibold" style={{color: '#46433c'}}>
-                  {meseCorrente.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' })}
-                </div>
-                
-                <button
-                  onClick={() => navigaMese('successivo')}
-                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
-                >
-                  <ChevronRight className="h-5 w-5" />
-                </button>
-              </div>
+              </span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <button
+                onClick={() => navigaMese('precedente')}
+                style={{ background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: '8px', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#ffffff', transition: 'background 0.15s' }}
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </button>
+              <span style={{ color: '#ffffff', fontSize: '15px', fontWeight: 600, minWidth: '180px', textAlign: 'center' as const, textTransform: 'capitalize' as const }}>
+                {meseCorrente.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' })}
+              </span>
+              <button
+                onClick={() => navigaMese('successivo')}
+                style={{ background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: '8px', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#ffffff', transition: 'background 0.15s' }}
+              >
+                <ChevronRight className="h-5 w-5" />
+              </button>
             </div>
           </div>
-          
-          <div className="p-6">
-            {/* Header giorni della settimana */}
-            <div className="grid grid-cols-7 gap-px mb-2">
-              {['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'].map((giorno) => (
-                <div key={giorno} className="h-10 flex items-center justify-center text-sm font-medium text-gray-500 bg-gray-50">
-                  {giorno}
+
+          <div style={{ padding: '0 0 20px 0' }}>
+            {/* Day-of-week header */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)' }}>
+              {['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'].map((g) => (
+                <div
+                  key={g}
+                  style={{
+                    height: '40px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    color: '#6b7280',
+                    letterSpacing: '0.06em',
+                    textTransform: 'uppercase' as const,
+                    borderBottom: '1px solid #e5e7eb',
+                    backgroundColor: '#f9fafb',
+                  }}
+                >
+                  {g}
                 </div>
               ))}
             </div>
-            
-            {/* Griglia calendario */}
-            <div className="grid grid-cols-7 gap-px bg-gray-200 rounded-lg overflow-hidden">
+
+            {/* Calendar grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '1px', backgroundColor: '#e5e7eb' }}>
               {renderCalendario()}
             </div>
-            
-            {/* Legenda */}
-            <div className="mt-6 flex flex-wrap gap-4 text-sm">
-              <div className="flex items-center">
-                <div className="w-3 h-3 bg-red-100 border border-red-200 rounded mr-2"></div>
-                <span className="text-gray-600">Scadute</span>
-              </div>
-              <div className="flex items-center">
-                <div className="w-3 h-3 bg-orange-100 border border-orange-200 rounded mr-2"></div>
-                <span className="text-gray-600">Imminenti</span>
-              </div>
-              <div className="flex items-center">
-                <div className="w-3 h-3 bg-blue-100 border border-blue-200 rounded mr-2"></div>
-                <span className="text-gray-600">Future</span>
-              </div>
-              <div className="flex items-center">
-                <div className="w-3 h-3 bg-green-100 border border-green-200 rounded mr-2"></div>
-                <span className="text-gray-600">Completate</span>
-              </div>
-              <div className="flex items-center">
-                <div className="w-3 h-3 bg-blue-50 border border-blue-200 rounded mr-2"></div>
-                <span className="text-gray-600">Oggi</span>
+
+            {/* Legend */}
+            <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: '16px', padding: '16px 20px 0', alignItems: 'center' }}>
+              {[
+                { dot: '#ef4444', bg: '#fee2e2', label: 'Scadute' },
+                { dot: '#f59e0b', bg: '#fff7ed', label: 'Imminenti' },
+                { dot: '#3b82f6', bg: '#eff6ff', label: 'Future' },
+                { dot: '#059669', bg: '#d1fae5', label: 'Completate' },
+              ].map(({ dot, bg, label }) => (
+                <div key={label} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: dot, flexShrink: 0 }} />
+                  <span style={{ fontSize: '12px', color: '#6b7280', fontWeight: 500 }}>{label}</span>
+                </div>
+              ))}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ width: '28px', height: '28px', borderRadius: '50%', backgroundColor: '#0F6CBD', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', color: '#fff', fontWeight: 700, flexShrink: 0 }}>1</span>
+                <span style={{ fontSize: '12px', color: '#6b7280', fontWeight: 500 }}>Oggi</span>
               </div>
             </div>
           </div>
@@ -1073,8 +1208,8 @@ const ScadenzarioManager = ({ initialFilter = null, onFilterChange }: Scadenzari
           
           <div className="divide-y divide-gray-200">
             {loading ? (
-              <div className="p-6 text-center text-gray-500">
-                Caricamento scadenze...
+              <div className="p-6 text-center">
+                <Spinner label="Caricamento scadenze..." />
               </div>
             ) : scadenzeFiltrate.length === 0 ? (
               <div className="p-6 text-center text-gray-500">

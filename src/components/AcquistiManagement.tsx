@@ -6,6 +6,7 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/hooks/useAuth";
 import { Acquisto, Fornitore, Settore } from "@/types";
 import { Plus, Edit2, Trash2, Save, X, Download, Printer, Building, Search, Filter, ChevronDown, ChevronUp } from "lucide-react";
+import { Spinner } from "@fluentui/react-components";
 import * as XLSX from "xlsx";
 
 const defaultForm = {
@@ -153,7 +154,7 @@ export default function AcquistiManagement() {
           {/* Header con titolo e pulsanti */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <Building className="h-8 w-8" style={{color: '#8d9c71'}} />
+              <Building className="h-8 w-8" style={{color: '#2f5fdd'}} />
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Gestione Acquisti</h1>
             </div>
             
@@ -162,7 +163,7 @@ export default function AcquistiManagement() {
               <button
                 onClick={() => setShowFilters(!showFilters)}
                 className={`flex items-center justify-center px-3 py-2 rounded-md transition-colors ${showFilters ? 'text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
-                style={showFilters ? {backgroundColor: '#8d9c71'} : {}}
+                style={showFilters ? {backgroundColor: '#2f5fdd'} : {}}
                 title="Filtri e ordinamento"
               >
                 <Filter className="h-4 w-4 mr-1" />
@@ -188,9 +189,9 @@ export default function AcquistiManagement() {
               <button
                 onClick={() => setShowForm(true)}
                 className="flex items-center justify-center px-4 py-2 text-white rounded-md transition-colors cursor-pointer w-full sm:w-auto"
-                style={{backgroundColor: '#8d9c71'}}
-                onMouseEnter={e => (e.target as HTMLButtonElement).style.backgroundColor = '#7a8a60'}
-                onMouseLeave={e => (e.target as HTMLButtonElement).style.backgroundColor = '#8d9c71'}
+                style={{backgroundColor: '#2f5fdd'}}
+                onMouseEnter={e => (e.target as HTMLButtonElement).style.backgroundColor = '#244fbf'}
+                onMouseLeave={e => (e.target as HTMLButtonElement).style.backgroundColor = '#2f5fdd'}
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Nuovo Acquisto
@@ -206,53 +207,53 @@ export default function AcquistiManagement() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Descrizione Breve <span className="text-red-500">*</span></label>
-                <input type="text" value={formData.descrizioneBreve} onChange={e => setFormData({ ...formData, descrizioneBreve: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500" required />
+                <input type="text" value={formData.descrizioneBreve} onChange={e => setFormData({ ...formData, descrizioneBreve: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500" required />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Oggetto della spesa</label>
-                <input type="text" value={formData.oggettoSpesa} onChange={e => setFormData({ ...formData, oggettoSpesa: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500" />
+                <input type="text" value={formData.oggettoSpesa} onChange={e => setFormData({ ...formData, oggettoSpesa: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Fornitore <span className="text-red-500">*</span></label>
-                <select value={formData.fornitoreId} onChange={e => handleFornitoreChange(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500" required>
+                <select value={formData.fornitoreId} onChange={e => handleFornitoreChange(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500" required>
                   <option value="">Seleziona...</option>
                   {fornitori.map(f => <option key={f.id} value={f.id}>{f.ragioneSociale}</option>)}
                 </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Categoria Spesa</label>
-                <select value={formData.categoriaSpesaId} onChange={e => setFormData({ ...formData, categoriaSpesaId: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                <select value={formData.categoriaSpesaId} onChange={e => setFormData({ ...formData, categoriaSpesaId: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500">
                   <option value="">Seleziona...</option>
                   {settori.map(s => <option key={s.id} value={s.id}>{s.nome}</option>)}
                 </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Imponibile (€) <span className="text-red-500">*</span></label>
-                <input type="number" min="0" step="0.01" value={formData.imponibile} onChange={e => handleImponibileIvaChange("imponibile", parseFloat(e.target.value) || 0)} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500" required />
+                <input type="number" min="0" step="0.01" value={formData.imponibile} onChange={e => handleImponibileIvaChange("imponibile", parseFloat(e.target.value) || 0)} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500" required />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Aliquota IVA (%) <span className="text-red-500">*</span></label>
-                <input type="number" min="0" max="100" step="0.01" value={formData.aliquotaIVA} onChange={e => handleImponibileIvaChange("aliquotaIVA", parseFloat(e.target.value) || 0)} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500" required />
+                <input type="number" min="0" max="100" step="0.01" value={formData.aliquotaIVA} onChange={e => handleImponibileIvaChange("aliquotaIVA", parseFloat(e.target.value) || 0)} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500" required />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Importo Totale (€) <span className="text-red-500">*</span></label>
-                <input type="number" min="0" step="0.01" value={formData.importoTotale} readOnly className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 focus:outline-none focus:ring-1 focus:ring-indigo-500" required />
+                <input type="number" min="0" step="0.01" value={formData.importoTotale} readOnly className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500" required />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Numero Documento</label>
-                <input type="text" value={formData.numeroDocumento} onChange={e => setFormData({ ...formData, numeroDocumento: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500" />
+                <input type="text" value={formData.numeroDocumento} onChange={e => setFormData({ ...formData, numeroDocumento: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Data Documento</label>
-                <input type="date" value={formData.dataDocumento} onChange={e => setFormData({ ...formData, dataDocumento: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500" />
+                <input type="date" value={formData.dataDocumento} onChange={e => setFormData({ ...formData, dataDocumento: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Data Scadenza</label>
-                <input type="date" value={formData.dataScadenza} onChange={e => setFormData({ ...formData, dataScadenza: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500" />
+                <input type="date" value={formData.dataScadenza} onChange={e => setFormData({ ...formData, dataScadenza: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Stato Pagamento</label>
-                <select value={formData.statoPagamento} onChange={e => setFormData({ ...formData, statoPagamento: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                <select value={formData.statoPagamento} onChange={e => setFormData({ ...formData, statoPagamento: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500">
                   <option value="Pagato">Pagato</option>
                   <option value="Da Pagare">Da Pagare</option>
                   <option value="In Scadenza">In Scadenza</option>
@@ -261,7 +262,7 @@ export default function AcquistiManagement() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Metodo Pagamento</label>
-                <select value={formData.metodoPagamento} onChange={e => setFormData({ ...formData, metodoPagamento: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                <select value={formData.metodoPagamento} onChange={e => setFormData({ ...formData, metodoPagamento: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500">
                   <option value="Bonifico">Bonifico</option>
                   <option value="Carta di Credito">Carta di Credito</option>
                   <option value="RID">RID</option>
@@ -270,19 +271,19 @@ export default function AcquistiManagement() {
               </div>
               <div className="lg:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Note</label>
-                <textarea value={formData.note} onChange={e => setFormData({ ...formData, note: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500" rows={2} />
+                <textarea value={formData.note} onChange={e => setFormData({ ...formData, note: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500" rows={2} />
               </div>
             </div>
             <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4 border-t">
               <button type="button" onClick={resetForm} className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">Annulla</button>
-              <button type="submit" className="inline-flex items-center justify-center px-4 py-2 text-white rounded-md hover:opacity-90" style={{backgroundColor: '#8d9c71'}}><Save className="h-4 w-4 mr-2" />{editingId ? 'Modifica' : 'Salva'}</button>
+              <button type="submit" className="inline-flex items-center justify-center px-4 py-2 text-white rounded-md hover:opacity-90" style={{backgroundColor: '#2f5fdd'}}><Save className="h-4 w-4 mr-2" />{editingId ? 'Modifica' : 'Salva'}</button>
             </div>
           </form>
             </div>
           )}
           {showFilters && (
             <div className="p-4 bg-gray-50 rounded-lg border">
-              <input type="text" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="Cerca per descrizione, oggetto, fornitore..." className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+              <input type="text" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="Cerca per descrizione, oggetto, fornitore..." className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
             </div>
           )}
           <div className="overflow-x-auto rounded-lg border border-gray-200">
@@ -302,7 +303,7 @@ export default function AcquistiManagement() {
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {loading ? (
-              <tr><td colSpan={9} className="px-2 sm:px-4 py-4 text-center">Caricamento...</td></tr>
+              <tr><td colSpan={9} className="px-2 sm:px-4 py-8 text-center"><Spinner label="Caricamento..." /></td></tr>
             ) : filteredAcquisti.length === 0 ? (
               <tr><td colSpan={9} className="px-2 sm:px-4 py-4 text-center">Nessun acquisto trovato</td></tr>
             ) : filteredAcquisti.map(a => (
@@ -314,7 +315,19 @@ export default function AcquistiManagement() {
                 <td className="px-2 sm:px-4 py-4 text-sm text-gray-600">{a.aliquotaIVA}%</td>
                 <td className="px-2 sm:px-4 py-4 text-sm font-medium text-gray-900">€ {a.importoTotale.toFixed(2)}</td>
                 <td className="px-2 sm:px-4 py-4 text-sm text-gray-600">{a.dataDocumento ? new Date(a.dataDocumento).toLocaleDateString() : '-'}</td>
-                <td className="px-2 sm:px-4 py-4 text-sm text-gray-600">{a.statoPagamento}</td>
+                <td className="px-2 sm:px-4 py-4 text-sm">
+                  {a.statoPagamento === 'Pagato' ? (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      Pagato
+                    </span>
+                  ) : a.statoPagamento === 'Da Pagare' ? (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                      Da Pagare
+                    </span>
+                  ) : (
+                    <span className="text-gray-600">{a.statoPagamento}</span>
+                  )}
+                </td>
                 <td className="px-2 sm:px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <div className="flex gap-2 justify-end">
                     <button onClick={() => handleEdit(a)} title="Modifica" className="hover:text-blue-900 cursor-pointer p-1 rounded hover:bg-blue-50 w-8 h-8 flex items-center justify-center" style={{color: '#3b82f6'}}>
